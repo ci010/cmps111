@@ -7,3 +7,5 @@
 *~
 *.bak
 *.pdf
+.vscode
+/include
