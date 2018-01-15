@@ -1,8 +1,8 @@
 wc : wc.o
-	gcc -o wc wc.o
+	cc -o wc wc.o
 
 wc.o : wc.c
-	gcc -c wc.c
+	cc -c wc.c
 
 test:
 	wc test-empty.in
