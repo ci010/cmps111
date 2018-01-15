@@ -16,26 +16,29 @@ int main(int argc, char** argv) {
     char buffer[1];
     int count = 0;
     int charCount = 0, wordCount = 0, lineCount = 0;
-    char inSpace = 0;
+    char inSpace = 1;
     while ((count = read(fd, buffer, 1))) {
+        // if (lineCount == 0) lineCount = 1;
         ++charCount;
         switch (buffer[0]) {
             case '\n':
             ++lineCount;
             inSpace = 1;
             break;
+            
+            case ' ':
+            inSpace = 1;
+            break;
+
             default:
             if (inSpace) {
                 ++wordCount;
                 inSpace = 0;
             }
             break;
-            case ' ':
-            inSpace = 1;
-            break;
         }
     }
-    printf("%d %d %d\n", charCount, wordCount, lineCount);
+    printf("%d\t%d\t%d\n", charCount, wordCount, lineCount);
     close(fd);
     return 0;
 }
