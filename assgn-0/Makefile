@@ -8,6 +8,6 @@ clean:
 	rm wc wc.o
 
 test:
-	./wc $(wildcard *.in)
+	$(foreach file,$(wildcard *.in),./wc $(file))
 
 .PHONY: test
