@@ -5,13 +5,13 @@
 int main(int argc, char** argv) {
     if (argc != 2) {
         printf("Usage: wc <filename>\n");
-        exit(0);
+        return 0;
     }
     const char* fileName = argv[1];
     int fd = open(fileName, O_RDONLY);
     if (fd == -1) {
         printf("Error: Cannot open file %s\n", fileName);
-        exit(0);
+        return 0;
     }
     char buffer[1];
     int count = 0;
