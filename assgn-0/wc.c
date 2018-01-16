@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     const char* fileName = argv[1];
     int fd = open(fileName, O_RDONLY);
     if (fd == -1) {
-        printf("Error: Cannot open file %s\n", fileName);
+        fprintf(stderr, "Error: Cannot open file %s\n", fileName);
         return 0;
     }
     char buffer[1];
