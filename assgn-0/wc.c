@@ -23,9 +23,7 @@ int main(int argc, char** argv) {
         switch (buffer[0]) {
             case '\n':
             ++lineCount;
-            inSpace = 1;
-            break;
-            
+            case '\t':
             case ' ':
             inSpace = 1;
             break;
