@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        int ai = 0;
+        int ai = 1;
         for (; ai < argc; ++ai)
         {
             const char *fileName = argv[ai];
