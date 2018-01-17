@@ -13,27 +13,30 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: Cannot open file %s\n", fileName);
         return 0;
     }
-    char buffer[1];
+    char buffer[512];
     int count = 0;
     int charCount = 0, wordCount = 0, lineCount = 0;
     char inSpace = 1;
-    while ((count = read(fd, buffer, 1))) {
-        // if (lineCount == 0) lineCount = 1;
-        ++charCount;
-        switch (buffer[0]) {
-            case '\n':
-            ++lineCount;
-            case '\t':
-            case ' ':
-            inSpace = 1;
-            break;
+    while ((count = read(fd, buffer, 512))) {
+        int i = 0;
+        for (; i < count; ++i) {
+            char c = buffer[i];
+            ++charCount;
+            switch (c) {
+                case '\n':
+                ++lineCount;
+                case '\t':
+                case ' ':
+                inSpace = 1;
+                break;
 
-            default:
-            if (inSpace) {
-                ++wordCount;
-                inSpace = 0;
+                default:
+                if (inSpace) {
+                    ++wordCount;
+                    inSpace = 0;
+                }
+                break;
             }
-            break;
         }
     }
     printf("%d\t%d\t%d\n", charCount, wordCount, lineCount);
