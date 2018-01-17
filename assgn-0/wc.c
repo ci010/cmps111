@@ -17,7 +17,7 @@ void wc(int fd, int *countArray)
         {
             char c = buffer[i];
             if (c == EOF) {
-                break;
+                return;
             }
             ++countArray[0];
             switch (c)
