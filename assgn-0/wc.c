@@ -20,7 +20,7 @@ void wc(int fd, int *countArray)
             switch (c)
             {
             case '\n':
-                ++countArray[1];
+                ++countArray[2];
             case '\t':
             case ' ':
                 inSpace = 1;
@@ -29,7 +29,7 @@ void wc(int fd, int *countArray)
             default:
                 if (inSpace)
                 {
-                    ++countArray[2];
+                    ++countArray[1];
                     inSpace = 0;
                 }
                 break;
