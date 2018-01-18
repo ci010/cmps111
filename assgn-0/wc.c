@@ -56,7 +56,7 @@ int main(int argc, char **argv)
             {
                 char c = buffer[i];
                 if (c == EOF) {
-                    return;
+                    break;
                 }
                 ++countArray[0];
                 switch (c)
