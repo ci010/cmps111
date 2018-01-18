@@ -47,38 +47,8 @@ int main(int argc, char **argv)
     int *countArray = (int *)malloc(sizeof(int) * 3);
     if (argc == 1)
     {
-        int count = 0;
-        char inSpace = 1;
-        while ((count = read(0, buffer, BUFF_SIZE)))
-        {
-            int i = 0;
-            for (; i < count; ++i)
-            {
-                char c = buffer[i];
-                if (c == EOF) {
-                    break;
-                }
-                ++countArray[0];
-                switch (c)
-                {
-                case '\n':
-                    ++countArray[2];
-                case '\t':
-                case ' ':
-                    inSpace = 1;
-                    break;
-
-                default:
-                    if (inSpace)
-                    {
-                        ++countArray[1];
-                        inSpace = 0;
-                    }
-                    break;
-                }
-            }
-        }
-        printf("%d\t%d\t%d\n", countArray[0], countArray[1], countArray[2]);
+        wc(0, countArray);
+        printf("\t%d\t%d\n", countArray[0], countArray[1], countArray[2]);
     }
     else
     {
