@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     if (argc == 1)
     {
         wc(0, countArray);
-        // printf("%d\t%d\t%d\n", countArray[0], countArray[1], countArray[2]);
+        printf("%d\t%d\t%d\n", countArray[0], countArray[1], countArray[2]);
     }
     else
     {
