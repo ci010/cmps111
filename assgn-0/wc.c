@@ -60,6 +60,7 @@ int main(int argc, char **argv)
             if (fd == -1)
             {
                 fprintf(stderr, "wc: %s: open: No such file or directory\n", fileName);
+                continue;
             }
             countArray[0] = countArray[1] = countArray[2] = 0;
             wc(fd, countArray);
