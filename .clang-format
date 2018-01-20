@@ -1,0 +1,4 @@
+BasedOnStyle: WebKit
+BreakBeforeBraces: Custom
+BraceWrapping: 
+    AfterFunction: false
