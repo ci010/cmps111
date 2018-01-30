@@ -6,7 +6,7 @@
 
 WORD        [0-9a-zA-Z\.\/-]+
 SPECIAL     [()<>|&;]
- 
+
 %%
     argc = 0; argv[0] = NULL;
 
@@ -21,7 +21,7 @@ SPECIAL     [()<>|&;]
 
 [ \t]+
 
-.
+.   
 %%
 
 char** getline() { 

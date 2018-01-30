@@ -11,6 +11,8 @@
 
 extern char** getline(void);
 
+char cwd[1024];
+
 typedef struct ls {
     int size;
     const char** content;
@@ -161,71 +163,108 @@ void builder_outfile(ExecBuilder builder, char* file) {
 }
 
 void prompt() {
-    printf("> ");
+    printf("%s > ", cwd);
 }
 
 int open_f(char* file, int mode) {
-    int fd = open(file, mode);
+    int fd = open(file, mode, 0666);
     if (fd == -1) {
-        fprintf(stderr, "Cannot open file %s\n", file);
+        perror("myshell");
         exit(-1);
     }
     return fd;
 }
-void redirect(int from, int to) {
-    if (dup2(to, from) == -1) {
-        fprintf(stderr, "Redirect port fail: %d -> %d\n", from, to);
+void redirect(int old, int new) {
+    if (dup2(old, new) == -1) {
+        perror("myshell");
         exit(-1);
     }
 }
 
-void exec(ExecNode* cmd) {
+void updatecwd() {
+    if (!getcwd(cwd, sizeof(cwd)))
+        perror("myshell");
+}
+
+int builtin_command(char** argv) {
+    if (argv[0] == NULL)
+        return 1;
+    if (strcmp(argv[0], "exit") == 0)
+        exit(0);
+    if (strcmp(argv[0], "cd") == 0) {
+        if (argv[1] != NULL) {
+            if (argv[2] != NULL) {
+                fprintf(stderr, "myshell: cd: to many arguments\n");
+                return 1;
+            }
+            if (chdir(argv[1]) != 0) {
+                perror("myshell");
+                return 1;
+            }
+            updatecwd();
+        }
+
+        return 1;
+    }
+    return 0;
+}
+
+void exec(ExecNode* cmd, int in) {
     if (cmd == NULL)
         return;
 
-    // node_debug(cmd);
-
-    int fd[2];
-    if (pipe(fd)) {
-        perror("pipe");
-        exit(-1);
+    int iofd[2];
+    if (cmd->forward) {
+        if (pipe(iofd)) {
+            perror("myshell");
+            exit(-1);
+        }
     }
-    int result;
     switch (fork()) {
     case -1:
-        fprintf(stderr, "Cannot fork process\n");
+        perror("myshell");
         exit(-1);
     case 0:
         if (cmd->infile != NULL) {
-            redirect(STDIN_FILENO, open_f(cmd->infile, O_RDONLY));
+            int fd = open_f(cmd->infile, O_RDONLY);
+            redirect(fd, STDIN_FILENO);
+            close(fd);
+        } else if (in) {
+            redirect(in, STDIN_FILENO);
+            close(in);
         }
+
         if (cmd->outfile != NULL) {
-            redirect(STDOUT_FILENO, open_f(cmd->outfile, O_CREAT | O_WRONLY));
+            int fd = open_f(cmd->outfile, O_CREAT | O_WRONLY);
+            redirect(fd, STDOUT_FILENO);
+            close(fd);
         } else if (cmd->forward) {
+            redirect(iofd[1], STDOUT_FILENO);
+            close(iofd[1]);
         }
 
-        result = execvp(*(cmd->argv), cmd->argv);
-
-        if (result < 0) {
-            perror("shit");
+        if (execvp(*(cmd->argv), cmd->argv) < 0) {
+            perror("myshell");
             exit(1);
         }
         break;
     default:
         wait(NULL);
-        exec(cmd->next);
+        exec(cmd->next, iofd[0]);
     }
 }
 
 int main() {
+    updatecwd();
     ExecBuilder builder = builder_new();
     ArgList argls = ls_new(10);
 
     while (1) {
         prompt();
         char** argv = getline();
-        if (argv[0] != NULL && strcmp(argv[0], "exit") == 0)
-            return 0;
+
+        if (builtin_command(argv))
+            continue;
 
         builder_prepare(builder);
         for (int i = 0; argv[i] != NULL; i++) {
@@ -251,7 +290,7 @@ int main() {
             }
         }
         builder_end(builder, argls);
-        exec(builder->head.next);
+        exec(builder->head.next, STDIN_FILENO);
         node_free(builder->head.next);
     }
     return 0;
