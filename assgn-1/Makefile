@@ -6,7 +6,7 @@ lex.yy.c : lex.l
 	flex lex.l
 
 clean :
-	rm myshell.o lex.yy.o lex.yy.c myshell
+	rm lex.yy.c myshell myshell.core
 
 test :
 	./myshell
