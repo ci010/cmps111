@@ -41,7 +41,7 @@ void* lsget(List ls, int i) {
 }
 void** lsdup(List ls) {
     void** d = malloc((ls->size + 1) * sizeof(void*));
-    memcpy(d, ls->content, (ls->size + 1) * sizeof(void*));
+    memcpy(d, ls->content, (ls->size) * sizeof(void*));
     d[ls->size] = NULL;
     return d;
 }
@@ -74,20 +74,19 @@ ExecNode* node_new() {
     return node;
 }
 void node_free(ExecNode** nodes) {
-    ExecNode* node = *nodes;
-    if (node == NULL)
-        return;
-    if (node->argv) {
-        for (int i = 0; i < node->argc; ++i)
-            free(node->argv[i]);
-        free(node->argv);
+    for (int i = 0; nodes[i] != NULL; ++i) {
+        ExecNode* node = *nodes;
+        if (node->argv) {
+            for (int i = 0; i < node->argc; ++i)
+                free(node->argv[i]);
+            free(node->argv);
+        }
+        if (node->infile)
+            free(node->infile);
+        if (node->outfile)
+            free(node->outfile);
+        free(node);
     }
-    if (node->infile)
-        free(node->infile);
-    if (node->outfile)
-        free(node->outfile);
-    node_free(nodes + 1);
-    free(node);
 }
 
 void prompt() {
@@ -96,20 +95,20 @@ void prompt() {
 int open_f(char* file, int mode) {
     int fd = open(file, mode, 0666);
     if (fd == -1) {
-        perror("myshell: open file:");
+        perror("myshell: open file");
         exit(-1);
     }
     return fd;
 }
 void redirect(int old, int new) {
     if (dup2(old, new) == -1) {
-        perror("myshell: redirect: ");
+        perror("myshell: redirect");
         exit(-1);
     }
 }
 void updatecwd() {
     if (!getcwd(cwd, sizeof(cwd)))
-        perror("myshell: cwd: ");
+        perror("myshell: cwd");
 }
 
 int builtin_command(char** argv) {
@@ -134,50 +133,61 @@ int builtin_command(char** argv) {
     return 0;
 }
 
-void exec(ExecNode** nodes, int in) {
-    ExecNode* cmd = *nodes;
-    if (cmd == NULL)
-        return;
+void exec(ExecNode** nodes) {
+    int in = STDIN_FILENO;
+    for (int i = 0; nodes[i] != NULL; ++i) {
+        ExecNode* cmd = nodes[i];
 
-    int iofd[2];
-    if (cmd->forward) {
-        if (pipe(iofd) < 0) {
-            perror("myshell: pipe: ");
+        printf("exec %s, %d\n", cmd->argv[0], cmd->forward);
+        if (cmd->infile)
+            printf("infile %s\n", cmd->infile);
+        if (cmd->outfile)
+            printf("outfile %s\n", cmd->outfile);
+
+        int iofd[2];
+        if (cmd->forward) {
+            if (pipe(iofd) < 0) {
+                perror("myshell: pipe");
+                exit(-1);
+            }
+        }
+        switch (fork()) {
+        case -1:
+            perror("myshell: fork");
             exit(-1);
-        }
-    }
-    switch (fork()) {
-    case -1:
-        perror("myshell: fork: ");
-        exit(-1);
-    case 0:
-        if (cmd->infile != NULL) {
-            int fd = open_f(cmd->infile, O_RDONLY);
-            redirect(fd, STDIN_FILENO);
-            close(fd);
-        } else if (in) {
-            redirect(in, STDIN_FILENO);
-            close(in);
-        }
+        case 0:
+            if (cmd->infile != NULL) {
+                printf("found infile");
+                int fd = open_f(cmd->infile, O_RDONLY);
+                redirect(fd, STDIN_FILENO);
+                close(fd);
+            } else if (in) {
+                printf("found in pipe");
+                redirect(in, STDIN_FILENO);
+                close(in);
+            }
 
-        if (cmd->outfile != NULL) {
-            int fd = open_f(cmd->outfile, O_CREAT | O_WRONLY);
-            redirect(fd, STDOUT_FILENO);
-            close(fd);
-        } else if (cmd->forward) {
-            close(iofd[0]);
-            redirect(iofd[1], STDOUT_FILENO);
+            if (cmd->outfile != NULL) {
+                printf("found outfile");
+                int fd = open_f(cmd->outfile, O_CREAT | O_WRONLY);
+                redirect(fd, STDOUT_FILENO);
+                close(fd);
+            } else if (cmd->forward) {
+                printf("found out pipe");
+                close(iofd[0]);
+                redirect(iofd[1], STDOUT_FILENO);
+                close(iofd[1]);
+            }
+            if (execvp(*(cmd->argv), cmd->argv) < 0) {
+                perror("myshell: execvp");
+                exit(1);
+            }
+            break;
+        default:
+            wait(NULL);
             close(iofd[1]);
+            in = iofd[0];
         }
-        if (execvp(*(cmd->argv), cmd->argv) < 0) {
-            perror("myshell: execvp: ");
-            exit(1);
-        }
-        break;
-    default:
-        wait(NULL);
-        close(iofd[1]);
-        exec(nodes + 1, iofd[0]);
     }
 }
 
@@ -250,11 +260,11 @@ int main() {
             lsclear(args);
             current = NULL;
         }
-        ExecNode** nodels = (ExecNode**)lsdup(nodes);
+        ExecNode** cmds = (ExecNode**)lsdup(nodes);
         lsclear(nodes);
-        exec(nodels, STDIN_FILENO);
-        node_free(nodels);
-        free(nodels);
+        exec(cmds);
+        node_free(cmds);
+        free(cmds);
     }
     return 0;
 }
