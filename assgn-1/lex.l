@@ -4,6 +4,10 @@
     int argc = 0;
 %}
 
+%option nounput
+%option noinput
+
+
 WORD        [0-9a-zA-Z\.\/-]+
 SPECIAL     [()<>|&;]
 
