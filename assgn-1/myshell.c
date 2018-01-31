@@ -38,7 +38,7 @@ void ls_push(ArgList ls, const char* word) {
 }
 char** ls_dup(ArgList ls) {
     char** d = malloc((ls->size + 1) * sizeof(char*));
-    memcpy(d, ls->content, (ls->size + 1) * sizeof(char*));
+    memcpy(d, ls->content, (ls->size) * sizeof(char*));
     d[ls->size] = NULL;
     return d;
 }
@@ -176,6 +176,7 @@ int open_f(char* file, int mode) {
 }
 void redirect(int old, int new) {
     if (dup2(old, new) == -1) {
+        fprintf(stderr, "Cannot redirect %d -> %d\n", old, new);
         perror("myshell");
         exit(-1);
     }
@@ -252,7 +253,7 @@ void exec(ExecNode* cmd, int in) {
     default:
         wait(NULL);
         close(iofd[1]);
-        exec(cmd->next, iofd[0]);
+        exec(cmd->next, cmd->forward ? iofd[0] : STDIN_FILENO);
     }
 }
 
