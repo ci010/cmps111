@@ -40,6 +40,8 @@ void* lsget(List ls, int i) {
     return ls->content[i];
 }
 void** lsdup(List ls) {
+    printf("duplist with size %d\n", ls->size);
+    printf("%s\n", lsget(ls, 0));
     void** d = malloc((ls->size + 1) * sizeof(void*));
     memcpy(d, ls->content, (ls->size) * sizeof(void*));
     d[ls->size] = NULL;
@@ -186,7 +188,7 @@ void exec(ExecNode** nodes) {
         default:
             wait(NULL);
             close(iofd[1]);
-            in = iofd[0];
+            in = cmd->forward ? iofd[0] : STDIN_FILENO;
         }
     }
 }
@@ -203,8 +205,9 @@ int main() {
             continue;
 
         ExecNode* current = NULL;
+        char finished = 0;
 
-        for (int i = 0; argv[i] != NULL; i++) {
+        for (int i = 0; finished != 1 && argv[i] != NULL; i++) {
             const char* arg = argv[i];
             switch (arg[0]) {
             case '|':
@@ -225,6 +228,7 @@ int main() {
                 ++i;
                 if (terminated(argv[i])) {
                     fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", argv[i]);
+                    finished = 1;
                     break;
                 }
                 if (current == NULL) {
@@ -237,6 +241,7 @@ int main() {
                 ++i;
                 if (terminated(argv[i])) {
                     fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", argv[i]);
+                    finished = 1;
                     break;
                 }
                 if (current == NULL) {
@@ -246,10 +251,8 @@ int main() {
                 current->outfile = argv[i];
                 break;
             default:
-                if (current == NULL) {
-                    current = node_new();
-                    lspush(nodes, (void*)current);
-                }
+                if (current == NULL)
+                    lspush(nodes, (void*)(current = node_new()));
                 lspush(args, (void*)arg);
                 break;
             }
@@ -261,8 +264,8 @@ int main() {
             current = NULL;
         }
         ExecNode** cmds = (ExecNode**)lsdup(nodes);
-        lsclear(nodes);
         exec(cmds);
+        lsclear(nodes);
         node_free(cmds);
         free(cmds);
     }
