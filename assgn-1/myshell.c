@@ -215,7 +215,7 @@ void exec(ExecNode* cmd, int in) {
 
     int iofd[2];
     if (cmd->forward) {
-        if (pipe(iofd)) {
+        if (pipe(iofd) < 0) {
             perror("myshell");
             exit(-1);
         }
@@ -239,6 +239,7 @@ void exec(ExecNode* cmd, int in) {
             redirect(fd, STDOUT_FILENO);
             close(fd);
         } else if (cmd->forward) {
+            close(iofd[0]);
             redirect(iofd[1], STDOUT_FILENO);
             close(iofd[1]);
         }
@@ -250,6 +251,7 @@ void exec(ExecNode* cmd, int in) {
         break;
     default:
         wait(NULL);
+        close(iofd[1]);
         exec(cmd->next, iofd[0]);
     }
 }
