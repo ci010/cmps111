@@ -13,34 +13,44 @@ extern char** getline(void);
 
 char cwd[1024];
 
-typedef struct ls {
+typedef struct list {
     int size;
-    const char** content;
+    void** content;
     int limit;
-} * ArgList;
-ArgList ls_new(int size) {
-    ArgList l = malloc(sizeof(struct ls));
+} * List;
+List lsnew(int size) {
+    List l = malloc(sizeof(struct list));
     l->size = 0;
     l->limit = size;
-    l->content = malloc(size * sizeof(char*));
+    l->content = malloc(sizeof(void*) * size);
     return l;
 }
-void ls_clear(ArgList ls) {
+void lspush(List ls, void* e) {
+    if (ls->size + 1 == ls->limit) {
+        ls->content = realloc(ls->content, ls->limit * 2 * sizeof(void*));
+        ls->limit *= 2;
+    }
+    ls->content[ls->size++] = e;
+}
+void* lsget(List ls, int i) {
+    if (i >= ls->size) {
+        perror("list");
+        exit(1);
+    }
+    return ls->content[i];
+}
+void** lsdup(List ls) {
+    void** d = malloc((ls->size + 1) * sizeof(void*));
+    memcpy(d, ls->content, (ls->size + 1) * sizeof(void*));
+    d[ls->size] = NULL;
+    return d;
+}
+void lsclear(List ls) {
     ls->size = 0;
     ls->content[0] = NULL;
 }
-void ls_push(ArgList ls, const char* word) {
-    if (ls->size + 1 == ls->limit) {
-        ls->content = realloc(ls->content, ls->limit * 2 * sizeof(char*));
-        ls->limit *= 2;
-    }
-    ls->content[ls->size++] = word;
-}
-char** ls_dup(ArgList ls) {
-    char** d = malloc((ls->size + 1) * sizeof(char*));
-    memcpy(d, ls->content, (ls->size + 1) * sizeof(char*));
-    d[ls->size] = NULL;
-    return d;
+int lssize(List ls) {
+    return ls->size;
 }
 
 typedef struct exec_node {
@@ -49,7 +59,6 @@ typedef struct exec_node {
     int argc;
     char* infile;
     char* outfile;
-    struct exec_node* next;
     char forward;
     char background;
 
@@ -58,14 +67,14 @@ ExecNode* node_new() {
     ExecNode* node = (ExecNode*)malloc(sizeof(struct exec_node));
     node->argc = 0;
     node->argv = NULL;
-    node->next = NULL;
     node->background = 0;
     node->infile = NULL;
     node->outfile = NULL;
     node->forward = 0;
     return node;
 }
-void node_free(ExecNode* node) {
+void node_free(ExecNode** nodes) {
+    ExecNode* node = *nodes;
     if (node == NULL)
         return;
     if (node->argv) {
@@ -77,113 +86,30 @@ void node_free(ExecNode* node) {
         free(node->infile);
     if (node->outfile)
         free(node->outfile);
-    if (node->next)
-        node_free(node->next);
+    node_free(nodes + 1);
     free(node);
-}
-void node_debug(ExecNode* n) {
-    if (n == NULL) {
-        printf("Node: NULL\n");
-        return;
-    }
-    printf("===========debug===========\n");
-    printf("Command:");
-    for (int i = 0; i < n->argc; ++i) {
-        printf(" %s", n->argv[i]);
-    }
-    printf("\n");
-    if (n->infile)
-        printf("infile: %s\n", n->infile);
-    if (n->outfile)
-        printf("outfile: %s\n", n->outfile);
-    if (n->next) {
-        node_debug(n->next);
-    }
-    printf("===========================\n");
-}
-
-typedef struct exec_builder {
-    ExecNode head;
-    ExecNode* tail;
-
-    ExecNode* current;
-} * ExecBuilder;
-ExecBuilder builder_new() {
-    ExecBuilder b = malloc(sizeof(struct exec_builder));
-    return b;
-}
-void builder_prepare(ExecBuilder b) {
-    b->head.next = NULL;
-    b->tail = &b->head;
-    b->current = NULL;
-}
-void builder_begin(ExecBuilder builder) {
-    if (builder->current == NULL) {
-        builder->current = node_new();
-        builder->tail->next = builder->current;
-        builder->tail = builder->current;
-    }
-}
-void builder_end(ExecBuilder builder, ArgList list) {
-    if (builder->current == NULL) // if invalidated, return
-        return;
-    builder->current->argc = list->size;
-    builder->current->argv = ls_dup(list);
-    ls_clear(list);
-    builder->current = NULL; // invalidate
-}
-void builder_forward(ExecBuilder builder) {
-    if (builder->current == NULL) {
-        fprintf(stderr, "-myshell: syntax error near unexpected token '|'\n");
-        return;
-    }
-    builder->current->forward = 1;
-}
-void builder_infile(ExecBuilder builder, char* file) {
-    if (terminated(file)) {
-        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", file);
-        return;
-    }
-    if (builder->current == NULL) {
-        fprintf(stderr, "-myshell: syntax error near unexpected token '<'\n");
-        return;
-    }
-    builder->current->infile = file;
-}
-void builder_outfile(ExecBuilder builder, char* file) {
-    if (terminated(file)) {
-        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", file);
-        return;
-    }
-    if (builder->current == NULL) {
-        fprintf(stderr, "-myshell: syntax error near unexpected token '>'\n");
-        return;
-    }
-    builder->current->outfile = file;
 }
 
 void prompt() {
     printf("%s > ", cwd);
 }
-
 int open_f(char* file, int mode) {
     int fd = open(file, mode, 0666);
     if (fd == -1) {
-        perror("myshell");
+        perror("myshell: open file:");
         exit(-1);
     }
     return fd;
 }
 void redirect(int old, int new) {
     if (dup2(old, new) == -1) {
-        perror("myshell");
+        perror("myshell: redirect: ");
         exit(-1);
     }
 }
-
 void updatecwd() {
     if (!getcwd(cwd, sizeof(cwd)))
-        perror("myshell");
+        perror("myshell: cwd: ");
 }
 
 int builtin_command(char** argv) {
@@ -203,26 +129,26 @@ int builtin_command(char** argv) {
             }
             updatecwd();
         }
-
         return 1;
     }
     return 0;
 }
 
-void exec(ExecNode* cmd, int in) {
+void exec(ExecNode** nodes, int in) {
+    ExecNode* cmd = *nodes;
     if (cmd == NULL)
         return;
 
     int iofd[2];
     if (cmd->forward) {
         if (pipe(iofd) < 0) {
-            perror("myshell");
+            perror("myshell: pipe: ");
             exit(-1);
         }
     }
     switch (fork()) {
     case -1:
-        perror("myshell");
+        perror("myshell: fork: ");
         exit(-1);
     case 0:
         if (cmd->infile != NULL) {
@@ -243,24 +169,22 @@ void exec(ExecNode* cmd, int in) {
             redirect(iofd[1], STDOUT_FILENO);
             close(iofd[1]);
         }
-
         if (execvp(*(cmd->argv), cmd->argv) < 0) {
-            perror("myshell");
+            perror("myshell: execvp: ");
             exit(1);
         }
         break;
     default:
         wait(NULL);
         close(iofd[1]);
-        exec(cmd->next, iofd[0]);
+        exec(nodes + 1, iofd[0]);
     }
 }
 
 int main() {
     updatecwd();
-    ExecBuilder builder = builder_new();
-    ArgList argls = ls_new(10);
-
+    List nodes = lsnew(10);
+    List args = lsnew(10);
     while (1) {
         prompt();
         char** argv = getline();
@@ -268,32 +192,69 @@ int main() {
         if (builtin_command(argv))
             continue;
 
-        builder_prepare(builder);
+        ExecNode* current = NULL;
+
         for (int i = 0; argv[i] != NULL; i++) {
             const char* arg = argv[i];
             switch (arg[0]) {
             case '|':
-                builder_forward(builder);
-                builder_end(builder, argls);
-                break;
+                if (current == NULL) {
+                    fprintf(stderr, "-myshell: syntax error near unexpected token '|'\n");
+                    break;
+                }
+                current->forward = 1;
             case ';':
-                builder_end(builder, argls);
+                if (current == NULL) // if invalidated, return
+                    break;
+                current->argc = lssize(args);
+                current->argv = (char**)lsdup(args);
+                lsclear(args);
+                current = NULL;
                 break;
             case '<':
-                builder_infile(builder, argv[++i]);
+                ++i;
+                if (terminated(argv[i])) {
+                    fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", argv[i]);
+                    break;
+                }
+                if (current == NULL) {
+                    fprintf(stderr, "-myshell: syntax error near unexpected token '<'\n");
+                    break;
+                }
+                current->infile = argv[i];
                 break;
             case '>':
-                builder_outfile(builder, argv[++i]);
+                ++i;
+                if (terminated(argv[i])) {
+                    fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", argv[i]);
+                    break;
+                }
+                if (current == NULL) {
+                    fprintf(stderr, "-myshell: syntax error near unexpected token '>'\n");
+                    break;
+                }
+                current->outfile = argv[i];
                 break;
             default:
-                builder_begin(builder);
-                ls_push(argls, arg);
+                if (current == NULL) {
+                    current = node_new();
+                    lspush(nodes, (void*)current);
+                }
+                lspush(args, (void*)arg);
                 break;
             }
         }
-        builder_end(builder, argls);
-        exec(builder->head.next, STDIN_FILENO);
-        node_free(builder->head.next);
+        if (current != NULL) {
+            current->argc = lssize(args);
+            current->argv = (char**)lsdup(args);
+            lsclear(args);
+            current = NULL;
+        }
+        ExecNode** nodels = (ExecNode**)lsdup(nodes);
+        lsclear(nodes);
+        exec(nodels, STDIN_FILENO);
+        node_free(nodels);
+        free(nodels);
     }
     return 0;
 }
