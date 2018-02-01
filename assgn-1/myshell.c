@@ -139,27 +139,29 @@ void builder_forward(ExecBuilder builder) {
     }
     builder->current->forward = 1;
 }
-void builder_infile(ExecBuilder builder, char* file) {
+char builder_infile(ExecBuilder builder, char* file) {
     if (terminated(file)) {
-        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", file);
-        return;
+        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", file ? file : " ");
+        return 1;
     }
     if (builder->current == NULL) {
         fprintf(stderr, "-myshell: syntax error near unexpected token '<'\n");
-        return;
+        return 0;
     }
     builder->current->infile = file;
+    return 0;
 }
-void builder_outfile(ExecBuilder builder, char* file) {
+char builder_outfile(ExecBuilder builder, char* file) {
     if (terminated(file)) {
-        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", file);
-        return;
+        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", file ? file : " ");
+        return 1;
     }
     if (builder->current == NULL) {
         fprintf(stderr, "-myshell: syntax error near unexpected token '>'\n");
-        return;
+        return 0;
     }
     builder->current->outfile = file;
+    return 0;
 }
 
 void prompt() {
@@ -269,22 +271,21 @@ int main() {
         if (builtin_command(argv))
             continue;
 
+        char finished = 0; // check the boundary, since we might increment the pointer to detect file
         builder_prepare(builder);
-        for (int i = 0; argv[i] != NULL; i++) {
+        for (int i = 0; !finished && argv[i] != NULL; i++) {
             const char* arg = argv[i];
             switch (arg[0]) {
             case '|':
                 builder_forward(builder);
-                builder_end(builder, argls);
-                break;
             case ';':
                 builder_end(builder, argls);
                 break;
             case '<':
-                builder_infile(builder, argv[++i]);
+                finished = builder_infile(builder, argv[++i]);
                 break;
             case '>':
-                builder_outfile(builder, argv[++i]);
+                finished = builder_outfile(builder, argv[++i]);
                 break;
             default:
                 builder_begin(builder);
