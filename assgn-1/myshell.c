@@ -40,8 +40,6 @@ void* lsget(List ls, int i) {
     return ls->content[i];
 }
 void** lsdup(List ls) {
-    printf("duplist with size %d\n", ls->size);
-    printf("%s\n", lsget(ls, 0));
     void** d = malloc((ls->size + 1) * sizeof(void*));
     memcpy(d, ls->content, (ls->size) * sizeof(void*));
     d[ls->size] = NULL;
@@ -63,7 +61,6 @@ typedef struct exec_node {
     char* outfile;
     char forward;
     char background;
-
 } ExecNode;
 ExecNode* node_new() {
     ExecNode* node = (ExecNode*)malloc(sizeof(struct exec_node));
@@ -77,7 +74,7 @@ ExecNode* node_new() {
 }
 void node_free(ExecNode** nodes) {
     for (int i = 0; nodes[i] != NULL; ++i) {
-        ExecNode* node = *nodes;
+        ExecNode* node = nodes[i];
         if (node->argv) {
             for (int i = 0; i < node->argc; ++i)
                 free(node->argv[i]);
@@ -140,12 +137,6 @@ void exec(ExecNode** nodes) {
     for (int i = 0; nodes[i] != NULL; ++i) {
         ExecNode* cmd = nodes[i];
 
-        printf("exec %s, %d\n", cmd->argv[0], cmd->forward);
-        if (cmd->infile)
-            printf("infile %s\n", cmd->infile);
-        if (cmd->outfile)
-            printf("outfile %s\n", cmd->outfile);
-
         int iofd[2];
         if (cmd->forward) {
             if (pipe(iofd) < 0) {
@@ -159,23 +150,19 @@ void exec(ExecNode** nodes) {
             exit(-1);
         case 0:
             if (cmd->infile != NULL) {
-                printf("found infile");
                 int fd = open_f(cmd->infile, O_RDONLY);
                 redirect(fd, STDIN_FILENO);
                 close(fd);
             } else if (in) {
-                printf("found in pipe");
                 redirect(in, STDIN_FILENO);
                 close(in);
             }
 
             if (cmd->outfile != NULL) {
-                printf("found outfile");
                 int fd = open_f(cmd->outfile, O_CREAT | O_WRONLY);
                 redirect(fd, STDOUT_FILENO);
                 close(fd);
             } else if (cmd->forward) {
-                printf("found out pipe");
                 close(iofd[0]);
                 redirect(iofd[1], STDOUT_FILENO);
                 close(iofd[1]);
@@ -188,7 +175,12 @@ void exec(ExecNode** nodes) {
         default:
             wait(NULL);
             close(iofd[1]);
-            in = cmd->forward ? iofd[0] : STDIN_FILENO;
+            if (cmd->forward) {
+                in = iofd[0];
+            } else {
+                close(iofd[0]);
+                in = STDIN_FILENO;
+            }
         }
     }
 }
