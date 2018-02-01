@@ -232,7 +232,7 @@ void exec(ExecNode* cmd, int in) {
             int fd = open_f(cmd->infile, O_RDONLY);
             redirect(fd, STDIN_FILENO);
             close(fd);
-        } else if (in) {
+        } else if (in != STDIN_FILENO) {
             redirect(in, STDIN_FILENO);
             close(in);
         }
