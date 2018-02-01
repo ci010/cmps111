@@ -7,7 +7,16 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define terminated(arg) arg == NULL || arg[0] == ';' || arg[0] == '\n'
+#define check_token(arg, token)                                                                              \
+    if (arg == NULL || arg[0] == ';' || arg[0] == '\n' || arg[0] == '|' || arg[0] == '<' || arg[0] == '>') { \
+        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", token);                       \
+        finished = 1;                                                                                        \
+        break;                                                                                               \
+    }                                                                                                        \
+    if (current == NULL) {                                                                                   \
+        fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", token);                       \
+        break;                                                                                               \
+    }
 
 extern char** getline(void);
 
@@ -175,12 +184,7 @@ void exec(ExecNode** nodes) {
         default:
             wait(NULL);
             close(iofd[1]);
-            if (cmd->forward) {
-                in = iofd[0];
-            } else {
-                close(iofd[0]);
-                in = STDIN_FILENO;
-            }
+            in = cmd->forward ? iofd[0] : STDIN_FILENO;
         }
     }
 }
@@ -203,10 +207,7 @@ int main() {
             const char* arg = argv[i];
             switch (arg[0]) {
             case '|':
-                if (current == NULL) {
-                    fprintf(stderr, "-myshell: syntax error near unexpected token '|'\n");
-                    break;
-                }
+                check_token(argv[i + 1], "|");
                 current->forward = 1;
             case ';':
                 if (current == NULL) // if invalidated, return
@@ -217,29 +218,11 @@ int main() {
                 current = NULL;
                 break;
             case '<':
-                ++i;
-                if (terminated(argv[i])) {
-                    fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", argv[i]);
-                    finished = 1;
-                    break;
-                }
-                if (current == NULL) {
-                    fprintf(stderr, "-myshell: syntax error near unexpected token '<'\n");
-                    break;
-                }
+                check_token(argv[++i], "<");
                 current->infile = argv[i];
                 break;
             case '>':
-                ++i;
-                if (terminated(argv[i])) {
-                    fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", argv[i]);
-                    finished = 1;
-                    break;
-                }
-                if (current == NULL) {
-                    fprintf(stderr, "-myshell: syntax error near unexpected token '>'\n");
-                    break;
-                }
+                check_token(argv[++i], ">");
                 current->outfile = argv[i];
                 break;
             default:
