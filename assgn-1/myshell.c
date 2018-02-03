@@ -63,7 +63,6 @@ int lssize(List ls) {
 }
 
 typedef struct exec_node {
-    // definition
     char** argv;
     int argc;
     char* infile;
@@ -71,7 +70,7 @@ typedef struct exec_node {
     char forward;
     char background;
 } ExecNode;
-ExecNode* node_new() {
+ExecNode* ennew() {
     ExecNode* node = (ExecNode*)malloc(sizeof(struct exec_node));
     node->argc = 0;
     node->argv = NULL;
@@ -81,20 +80,17 @@ ExecNode* node_new() {
     node->forward = 0;
     return node;
 }
-void node_free(ExecNode** nodes) {
-    for (int i = 0; nodes[i] != NULL; ++i) {
-        ExecNode* node = nodes[i];
-        if (node->argv) {
-            for (int i = 0; i < node->argc; ++i)
-                free(node->argv[i]);
-            free(node->argv);
-        }
-        if (node->infile)
-            free(node->infile);
-        if (node->outfile)
-            free(node->outfile);
-        free(node);
+void enfree(ExecNode* node) {
+    if (node->argv) {
+        for (int i = 0; i < node->argc; ++i)
+            free(node->argv[i]);
+        free(node->argv);
     }
+    if (node->infile)
+        free(node->infile);
+    if (node->outfile)
+        free(node->outfile);
+    free(node);
 }
 
 void prompt() {
@@ -162,6 +158,8 @@ void exec(ExecNode** nodes) {
                 int fd = open_f(cmd->infile, O_RDONLY);
                 redirect(fd, STDIN_FILENO);
                 close(fd);
+                if (in)
+                    close(in);
             } else if (in) {
                 redirect(in, STDIN_FILENO);
                 close(in);
@@ -183,7 +181,8 @@ void exec(ExecNode** nodes) {
             break;
         default:
             wait(NULL);
-            close(iofd[1]);
+            if (cmd->forward)
+                close(iofd[1]);
             in = cmd->forward ? iofd[0] : STDIN_FILENO;
         }
     }
@@ -229,7 +228,7 @@ int main() {
                 break;
             default:
                 if (current == NULL)
-                    lspush(nodes, (void*)(current = node_new()));
+                    lspush(nodes, (void*)(current = ennew()));
                 lspush(args, (void*)arg);
                 break;
             }
@@ -243,7 +242,8 @@ int main() {
         ExecNode** cmds = (ExecNode**)lsdup(nodes);
         exec(cmds);
         lsclear(nodes);
-        node_free(cmds);
+        for (int i = 0; cmds[i] != NULL; ++i)
+            enfree(cmds[i]);
         free(cmds);
     }
     return 0;
