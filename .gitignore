@@ -6,6 +6,5 @@
 *.tgz
 *~
 *.bak
-*.pdf
 .vscode
 /include
