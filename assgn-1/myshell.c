@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define check_token(arg, token)                                                                              \
+#define CHECK_TOKEN(arg, token)                                                                              \
     if (arg == NULL || arg[0] == ';' || arg[0] == '\n' || arg[0] == '|' || arg[0] == '<' || arg[0] == '>') { \
         fprintf(stderr, "-myshell: syntax error near unexpected token '%s'\n", token);                       \
         finished = 1;                                                                                        \
@@ -207,7 +207,7 @@ int main() {
             const char* arg = argv[i];
             switch (arg[0]) {
             case '|':
-                check_token(argv[i + 1], "|");
+                CHECK_TOKEN(argv[i + 1], "|");
                 current->forward = 1;
             case ';':
                 if (current == NULL) // if invalidated, return
@@ -218,11 +218,13 @@ int main() {
                 current = NULL;
                 break;
             case '<':
-                check_token(argv[++i], "<");
+                ++i;
+                CHECK_TOKEN(argv[i], "<");
                 current->infile = argv[i];
                 break;
             case '>':
-                check_token(argv[++i], ">");
+                ++i;
+                CHECK_TOKEN(argv[i], ">");
                 current->outfile = argv[i];
                 break;
             default:
