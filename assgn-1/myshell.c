@@ -142,6 +142,9 @@ void exec(ExecNode** nodes) {
     for (int i = 0; nodes[i] != NULL; ++i) {
         ExecNode* cmd = nodes[i];
 
+        if (builtin_command(cmd->argv))
+            continue;
+
         int iofd[2];
         if (cmd->forward) {
             if (pipe(iofd) < 0) {
@@ -195,9 +198,6 @@ int main() {
     while (1) {
         prompt();
         char** argv = getline();
-
-        if (builtin_command(argv))
-            continue;
 
         ExecNode* current = NULL;
         char finished = 0;
