@@ -1,0 +1,12 @@
+# $FreeBSD: releng/11.1/usr.bin/less/Makefile.common 319186 2017-05-30 04:27:05Z ngie $
+
+LSDIR=	${SRCTOP}/contrib/less
+.PATH:	${LSDIR}
+
+CFLAGS+=-I${SRCTOP}/usr.bin/less -I${LSDIR}
+WARNS?=	1
+
+.SUFFIXES: .nro .1
+
+.nro.1:
+	cat ${.IMPSRC} > ${.TARGET}

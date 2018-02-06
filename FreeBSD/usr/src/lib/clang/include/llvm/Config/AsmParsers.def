@@ -1,0 +1,14 @@
+/* $FreeBSD: releng/11.1/lib/clang/include/llvm/Config/AsmParsers.def 310618 2016-12-26 20:36:37Z dim $ */
+
+#ifndef LLVM_ASM_PARSER
+#  error Please define the macro LLVM_ASM_PARSER(TargetName)
+#endif
+
+LLVM_ASM_PARSER(AArch64)
+LLVM_ASM_PARSER(ARM)
+LLVM_ASM_PARSER(Mips)
+LLVM_ASM_PARSER(PowerPC)
+LLVM_ASM_PARSER(Sparc)
+LLVM_ASM_PARSER(X86)
+
+#undef LLVM_ASM_PARSER

@@ -1,0 +1,5 @@
+# $FreeBSD: releng/11.1/contrib/llvm/tools/lld/FREEBSD-Xlist 305069 2016-08-30 16:18:56Z emaste $
+cmake/
+docs/
+test/
+unittests/

@@ -1,0 +1,9 @@
+# $FreeBSD: releng/11.1/sys/modules/netgraph/bpf/Makefile 319182 2017-05-30 04:11:12Z ngie $
+# $Whistle: Makefile,v 1.1 1999/12/03 01:44:28 archie Exp $
+
+.PATH: ${SRCTOP}/sys/net
+
+KMOD=	ng_bpf
+SRCS=	opt_bpf.h ng_bpf.c bpf_filter.c
+
+.include <bsd.kmod.mk>

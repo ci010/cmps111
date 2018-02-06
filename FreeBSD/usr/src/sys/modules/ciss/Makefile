@@ -1,0 +1,11 @@
+# $FreeBSD: releng/11.1/sys/modules/ciss/Makefile 319182 2017-05-30 04:11:12Z ngie $
+
+KMOD		=  ciss
+.PATH:		${SRCTOP}/sys/dev/${KMOD}
+SRCS		=  ciss.c
+SRCS		+= opt_scsi.h opt_cam.h
+SRCS		+= device_if.h bus_if.h pci_if.h
+
+#CFLAGS		+=-DCISS_DEBUG
+
+.include <bsd.kmod.mk>

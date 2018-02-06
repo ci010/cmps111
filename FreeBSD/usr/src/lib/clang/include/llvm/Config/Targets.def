@@ -1,0 +1,14 @@
+/* $FreeBSD: releng/11.1/lib/clang/include/llvm/Config/Targets.def 310618 2016-12-26 20:36:37Z dim $ */
+
+#ifndef LLVM_TARGET
+#  error Please define the macro LLVM_TARGET(TargetName)
+#endif
+
+LLVM_TARGET(AArch64)
+LLVM_TARGET(ARM)
+LLVM_TARGET(Mips)
+LLVM_TARGET(PowerPC)
+LLVM_TARGET(Sparc)
+LLVM_TARGET(X86)
+
+#undef LLVM_TARGET

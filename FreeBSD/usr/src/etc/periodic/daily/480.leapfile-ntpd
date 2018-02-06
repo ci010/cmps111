@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# $FreeBSD: releng/11.1/etc/periodic/daily/480.leapfile-ntpd 317373 2017-04-24 15:29:17Z asomers $
+#
+
+# If there is a global system configuration file, suck it in.
+#
+if [ -r /etc/defaults/periodic.conf ]
+then
+    . /etc/defaults/periodic.conf
+    source_periodic_confs
+fi
+
+case "$daily_ntpd_leapfile_enable" in
+    [Yy][Ee][Ss])
+        anticongestion
+        service ntpd onefetch
+        ;;
+esac
+
+exit $rc

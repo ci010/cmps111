@@ -1,0 +1,14 @@
+/* $FreeBSD: releng/11.1/lib/clang/include/llvm/Config/Disassemblers.def 310618 2016-12-26 20:36:37Z dim $ */
+
+#ifndef LLVM_DISASSEMBLER
+#  error Please define the macro LLVM_DISASSEMBLER(TargetName)
+#endif
+
+LLVM_DISASSEMBLER(AArch64)
+LLVM_DISASSEMBLER(ARM)
+LLVM_DISASSEMBLER(Mips)
+LLVM_DISASSEMBLER(PowerPC)
+LLVM_DISASSEMBLER(Sparc)
+LLVM_DISASSEMBLER(X86)
+
+#undef LLVM_DISASSEMBLER

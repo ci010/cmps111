@@ -1,0 +1,19 @@
+# $FreeBSD: releng/11.1/sys/modules/mlx4ib/Makefile 319182 2017-05-30 04:11:12Z ngie $
+.PATH:  ${SRCTOP}/sys/ofed/drivers/infiniband/hw/mlx4
+
+KMOD=	mlx4ib
+SRCS=	device_if.h bus_if.h vnode_if.h pci_if.h \
+	opt_inet.h opt_inet6.h \
+	alias_GUID.c mcg.c sysfs.c ah.c cq.c \
+	mlx4_exp.c \
+	doorbell.c mad.c main.c mr.c qp.c srq.c wc.c cm.c
+
+CFLAGS+= -I${SRCTOP}/sys/ofed/drivers/infiniband/hw/mlx4
+CFLAGS+= -I${SRCTOP}/sys/ofed/include
+CFLAGS+= -I${SRCTOP}/sys/compat/linuxkpi/common/include
+CFLAGS+= -DCONFIG_INFINIBAND_USER_MEM
+CFLAGS+= -DINET6 -DINET
+
+.include <bsd.kmod.mk>
+
+CFLAGS+= -Wno-cast-qual -Wno-pointer-arith

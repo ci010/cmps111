@@ -1,0 +1,8 @@
+# $FreeBSD: releng/11.1/sys/modules/i2c/iic/Makefile 319182 2017-05-30 04:11:12Z ngie $
+
+.PATH:		${SRCTOP}/sys/dev/iicbus
+KMOD		= iic
+SRCS		= device_if.h bus_if.h iicbus_if.h \
+		  iic.c
+
+.include <bsd.kmod.mk>

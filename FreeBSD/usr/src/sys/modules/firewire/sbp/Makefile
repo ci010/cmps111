@@ -1,0 +1,14 @@
+# $FreeBSD: releng/11.1/sys/modules/firewire/sbp/Makefile 319182 2017-05-30 04:11:12Z ngie $
+
+# Makefile for the SBP-II (Serial Bus Protocol 2/SCSI over IEEE1394)
+
+.PATH: ${SRCTOP}/sys/dev/firewire
+
+KMOD	= sbp
+SRCS	= bus_if.h device_if.h \
+	  opt_cam.h opt_scsi.h \
+	  sbp.c sbp.h \
+	  firewire.h firewirereg.h \
+	  iec13213.h
+
+.include <bsd.kmod.mk>

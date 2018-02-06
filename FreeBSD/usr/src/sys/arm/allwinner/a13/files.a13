@@ -1,0 +1,3 @@
+# $FreeBSD: releng/11.1/sys/arm/allwinner/a13/files.a13 302472 2016-07-08 23:38:25Z manu $
+
+arm/allwinner/a13/a13_padconf.c		standard
