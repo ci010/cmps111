@@ -2016,8 +2016,8 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 static void
 sched_lottery(struct thread *td) {
     u_char prio = td->td_priority;
-    log(LOG_DEBUG, "[Lottery] Priority: %d\n", prio);
-    log(LOG_DEBUG, "[Lottery] Nice: %d\n", td->td_proc->p_nice);
+    log(7, "[Lottery] Priority: %d\n", prio);
+    log(7, "[Lottery] Nice: %d\n", td->td_proc->p_nice);
 }
 
 
