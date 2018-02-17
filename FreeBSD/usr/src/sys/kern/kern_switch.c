@@ -254,6 +254,7 @@ runq_init(struct runq *rq)
 	bzero(rq, sizeof *rq);
 	for (i = 0; i < RQ_NQS; i++)
 		TAILQ_INIT(&rq->rq_queues[i]);
+	TAILQ_INIT(&rq->rq_usr);
 }
 
 /*
@@ -345,6 +346,14 @@ runq_setbit(struct runq *rq, int pri)
 	rqb->rqb_bits[RQB_WORD(pri)] |= RQB_BIT(pri);
 }
 
+void
+runq_remove_lott(struct runq *rq, struct thread *td) {
+	struct rqhead *rqh;
+
+	rqh = rq->rq_usr;
+	TAILQ_REMOVE(rqh, td, td_runq);
+}
+
 /*
  * Add the thread to the queue specified by its priority, and set the
  * corresponding status bit.
@@ -354,6 +363,12 @@ runq_add(struct runq *rq, struct thread *td, int flags)
 {
 	struct rqhead *rqh;
 	int pri;
+
+	if (td->td_proc->p_pid) {
+		rqh = rq->rq_usr;
+		TAILQ_INSERT_TAIL(rqh, td, td_runq);
+		return;
+	}
 
 	pri = td->td_priority / RQ_PPQ;
 	td->td_rqindex = pri;
@@ -372,6 +387,12 @@ void
 runq_add_pri(struct runq *rq, struct thread *td, u_char pri, int flags)
 {
 	struct rqhead *rqh;
+
+	if (td->td_proc->p_pid) {
+		rqh = rq->rq_usr;
+		TAILQ_INSERT_TAIL(rqh, td, td_runq);
+		return;
+	}
 
 	KASSERT(pri < RQ_NQS, ("runq_add_pri: %d out of range", pri));
 	td->td_rqindex = pri;
@@ -470,6 +491,14 @@ runq_choose(struct runq *rq)
 	}
 	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
 
+	rqh = rq->rq_usr;
+	// TAILQ_FOREACH(td, rqh, td_runq) {
+	// }
+	if (!TAILQ_EMPTY(rqh)) {
+		td = TAILQ_FIRST(rqh);
+		return (td);
+	}
+
 	return (NULL);
 }
 
@@ -491,6 +520,14 @@ runq_choose_from(struct runq *rq, u_char idx)
 	}
 	CTR1(KTR_RUNQ, "runq_choose_from: idlethread pri=%d", pri);
 
+	rqh = rq->rq_usr;
+	// TAILQ_FOREACH(td, rqh, td_runq) {
+	// }
+	if (!TAILQ_EMPTY(rqh)) {
+		td = TAILQ_FIRST(rqh);
+		return (td);
+	}
+
 	return (NULL);
 }
 /*
@@ -501,7 +538,6 @@ runq_choose_from(struct runq *rq, u_char idx)
 void
 runq_remove(struct runq *rq, struct thread *td)
 {
-
 	runq_remove_idx(rq, td, NULL);
 }
 
@@ -510,6 +546,11 @@ runq_remove_idx(struct runq *rq, struct thread *td, u_char *idx)
 {
 	struct rqhead *rqh;
 	u_char pri;
+
+	if (td->td_proc->p_pid) {
+		rqh = rq->rq_usr;
+		TAILQ_REMOVE(rqh, td, td_runq);
+	}
 
 	KASSERT(td->td_flags & TDF_INMEM,
 		("runq_remove_idx: thread swapped out"));
