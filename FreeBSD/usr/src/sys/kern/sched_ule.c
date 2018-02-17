@@ -2025,9 +2025,15 @@ sched_nice(struct proc *p, int nice)
 	FOREACH_THREAD_IN_PROC(p, td) {
 		thread_lock(td);
 		sched_priority(td);
+		sched_lottery(td);
 		sched_prio(td, td->td_base_user_pri);
 		thread_unlock(td);
 	}
+}
+
+static void
+sched_lottery(td) {
+	
 }
 
 /*
