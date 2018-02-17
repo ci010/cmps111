@@ -60,6 +60,8 @@ struct rqbits {
 struct runq {
 	struct	rqbits rq_status;
 	struct  rqhead rq_usr;
+
+	uint rq_tickets;
 	struct	rqhead rq_queues[RQ_NQS];
 };
 

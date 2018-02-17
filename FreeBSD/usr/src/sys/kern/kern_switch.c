@@ -243,6 +243,40 @@ critical_exit(void)
 /************************************************************************
  * SYSTEM RUN QUEUE manipulations and tests				*
  ************************************************************************/
+
+u_long runq_rnd_pool[256];
+int rnd_piov;
+char runq_rnd_dirty;
+
+static void
+runq_rnd_init() {
+	int i;
+	rnd_piov = 0;
+	for (i = 0; i < 256; ++i) {
+		runq_rnd_pool[i] = random();
+	}
+	runq_rnd_dirty = 0;
+}
+
+static void
+runq_rnd_update() {
+	if (!runq_rnd_dirty) return;
+	int i;
+	for (i = 0; i < rnd_piov; ++i) {
+		runq_rnd_pool[i] = random();
+	}
+	runq_rnd_dirty = 0;
+}
+
+static u_long
+runq_rnd() {
+	runq_rnd_dirty = 1;
+	if (rnd_piov == 256) {
+		rnd_piov = 0;
+	}
+	return runq_rnd_pool[rnd_piov++];
+}
+
 /*
  * Initialize a run structure.
  */
@@ -255,6 +289,8 @@ runq_init(struct runq *rq)
 	for (i = 0; i < RQ_NQS; i++)
 		TAILQ_INIT(&rq->rq_queues[i]);
 	TAILQ_INIT(&rq->rq_usr);
+	rq->rq_tickets = 0;
+	runq_rnd_init();
 }
 
 /*
@@ -359,6 +395,8 @@ runq_add(struct runq *rq, struct thread *td, int flags)
 	if (td->td_proc->p_pid) {
 		rqh = &rq->rq_usr;
 		TAILQ_INSERT_TAIL(rqh, td, td_runq);
+		rq->rq_tickets += td->td_ticket;
+		runq_rnd_update();
 		return;
 	}
 
@@ -383,6 +421,8 @@ runq_add_pri(struct runq *rq, struct thread *td, u_char pri, int flags)
 	if (td->td_proc->p_pid) {
 		rqh = &rq->rq_usr;
 		TAILQ_INSERT_TAIL(rqh, td, td_runq);
+		rq->rq_tickets += td->td_ticket;
+		runq_rnd_update();
 		return;
 	}
 
@@ -484,10 +524,18 @@ runq_choose(struct runq *rq)
 	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
 
 	rqh = &rq->rq_usr;
-	// TAILQ_FOREACH(td, rqh, td_runq) {
-	// }
 	if (!TAILQ_EMPTY(rqh)) {
-		td = TAILQ_FIRST(rqh);
+		ulong sum;
+		ulong r;
+
+		sum = 0;
+		r = runq_rnd() % rq->rq_tickets;
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			sum += td->td_ticket;
+			if (sum > r) {
+				return (td);
+			}
+		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
 	}
@@ -514,10 +562,18 @@ runq_choose_from(struct runq *rq, u_char idx)
 	CTR1(KTR_RUNQ, "runq_choose_from: idlethread pri=%d", pri);
 
 	rqh = &rq->rq_usr;
-	// TAILQ_FOREACH(td, rqh, td_runq) {
-	// }
 	if (!TAILQ_EMPTY(rqh)) {
-		td = TAILQ_FIRST(rqh);
+		ulong sum;
+		ulong r;
+
+		sum = 0;
+		r = runq_rnd() % rq->rq_tickets;
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			sum += td->td_ticket;
+			if (sum > r) {
+				return (td);
+			}
+		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
 	}
@@ -544,6 +600,8 @@ runq_remove_idx(struct runq *rq, struct thread *td, u_char *idx)
 	if (td->td_proc->p_pid) {
 		rqh = &rq->rq_usr;
 		TAILQ_REMOVE(rqh, td, td_runq);
+		rq->rq_tickets -= td->td_ticket;
+		runq_rnd_update();
 		return;
 	}
 
@@ -562,3 +620,4 @@ runq_remove_idx(struct runq *rq, struct thread *td, u_char *idx)
 			*idx = (pri + 1) % RQ_NQS;
 	}
 }
+
