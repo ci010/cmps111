@@ -346,14 +346,6 @@ runq_setbit(struct runq *rq, int pri)
 	rqb->rqb_bits[RQB_WORD(pri)] |= RQB_BIT(pri);
 }
 
-void
-runq_remove_lott(struct runq *rq, struct thread *td) {
-	struct rqhead *rqh;
-
-	rqh = &rq->rq_usr;
-	TAILQ_REMOVE(rqh, td, td_runq);
-}
-
 /*
  * Add the thread to the queue specified by its priority, and set the
  * corresponding status bit.
@@ -495,6 +487,7 @@ runq_choose(struct runq *rq)
 	// TAILQ_FOREACH(td, rqh, td_runq) {
 	// }
 	if (!TAILQ_EMPTY(rqh)) {
+		log(7, "[lott] choosing, q is not empty!");
 		td = TAILQ_FIRST(rqh);
 		return (td);
 	}
@@ -524,6 +517,7 @@ runq_choose_from(struct runq *rq, u_char idx)
 	// TAILQ_FOREACH(td, rqh, td_runq) {
 	// }
 	if (!TAILQ_EMPTY(rqh)) {
+		log(7, "[lott] choosing, q is not empty!");
 		td = TAILQ_FIRST(rqh);
 		return (td);
 	}
