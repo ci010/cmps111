@@ -525,8 +525,8 @@ runq_choose(struct runq *rq)
 
 	rqh = &rq->rq_usr;
 	if (!TAILQ_EMPTY(rqh)) {
-		ulong sum;
-		ulong r;
+		u_long sum;
+		u_long r;
 
 		sum = 0;
 		r = runq_rnd() % rq->rq_tickets;
@@ -563,8 +563,8 @@ runq_choose_from(struct runq *rq, u_char idx)
 
 	rqh = &rq->rq_usr;
 	if (!TAILQ_EMPTY(rqh)) {
-		ulong sum;
-		ulong r;
+		u_long sum;
+		u_long r;
 
 		sum = 0;
 		r = runq_rnd() % rq->rq_tickets;
