@@ -528,14 +528,14 @@ runq_choose(struct runq *rq)
 		u_long sum;
 		u_long r;
 
-		sum = 0;
-		r = runq_rnd() % rq->rq_tickets;
-		TAILQ_FOREACH(td, rqh, td_runq) {
-			sum += td->td_ticket;
-			if (sum > r) {
-				return (td);
-			}
-		}
+		// sum = 0;
+		// r = runq_rnd() % rq->rq_tickets;
+		// TAILQ_FOREACH(td, rqh, td_runq) {
+		// 	sum += td->td_ticket;
+		// 	if (sum > r) {
+		// 		return (td);
+		// 	}
+		// }
 		if (td == NULL) {
 			td = TAILQ_FIRST(rqh);
 			log(7, "[Lottery] Hmmmm..... rnd not worked\n");
@@ -570,14 +570,14 @@ runq_choose_from(struct runq *rq, u_char idx)
 		u_long sum;
 		u_long r;
 
-		sum = 0;
-		r = runq_rnd() % rq->rq_tickets;
-		TAILQ_FOREACH(td, rqh, td_runq) {
-			sum += td->td_ticket;
-			if (sum > r) {
-				return (td);
-			}
-		}
+		// sum = 0;
+		// r = runq_rnd() % rq->rq_tickets;
+		// TAILQ_FOREACH(td, rqh, td_runq) {
+		// 	sum += td->td_ticket;
+		// 	if (sum > r) {
+		// 		return (td);
+		// 	}
+		// }
 		if (td == NULL) {
 			td = TAILQ_FIRST(rqh);
 			log(7, "[Lottery] Hmmmm..... rnd not worked\n");
