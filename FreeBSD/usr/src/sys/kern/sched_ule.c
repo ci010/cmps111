@@ -2013,7 +2013,7 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 
 
 static void
-sched_lottery(td) {
+sched_lottery(struct thread *td) {
 	
 }
 
