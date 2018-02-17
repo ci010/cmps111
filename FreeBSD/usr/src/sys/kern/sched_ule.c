@@ -462,6 +462,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 	TDQ_LOCK_ASSERT(tdq, MA_OWNED);
 	THREAD_LOCK_ASSERT(td, MA_OWNED);
 
+	log(7, "[Add] PID: %d, TID: %d\n", td->td_proc->pid, td->td_tid);
 	pri = td->td_priority;
 	ts = td_get_sched(td);
 	TD_SET_RUNQ(td);
@@ -2017,7 +2018,6 @@ static void
 sched_lottery(struct thread *td) {
     u_char prio = td->td_priority;
     log(7, "[Lottery] Priority: %d, Nice: %d, Thread Id: %d, Pid: %d\n", prio, td->td_proc->p_nice,td->td_tid, td->td_proc->p_pid);
-	
 }
 
 
