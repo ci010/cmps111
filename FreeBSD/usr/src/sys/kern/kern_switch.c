@@ -350,7 +350,7 @@ void
 runq_remove_lott(struct runq *rq, struct thread *td) {
 	struct rqhead *rqh;
 
-	rqh = rq->rq_usr;
+	rqh = &rq->rq_usr;
 	TAILQ_REMOVE(rqh, td, td_runq);
 }
 
@@ -365,7 +365,7 @@ runq_add(struct runq *rq, struct thread *td, int flags)
 	int pri;
 
 	if (td->td_proc->p_pid) {
-		rqh = rq->rq_usr;
+		rqh = &rq->rq_usr;
 		TAILQ_INSERT_TAIL(rqh, td, td_runq);
 		return;
 	}
@@ -389,7 +389,7 @@ runq_add_pri(struct runq *rq, struct thread *td, u_char pri, int flags)
 	struct rqhead *rqh;
 
 	if (td->td_proc->p_pid) {
-		rqh = rq->rq_usr;
+		rqh = &rq->rq_usr;
 		TAILQ_INSERT_TAIL(rqh, td, td_runq);
 		return;
 	}
@@ -491,7 +491,7 @@ runq_choose(struct runq *rq)
 	}
 	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
 
-	rqh = rq->rq_usr;
+	rqh = &rq->rq_usr;
 	// TAILQ_FOREACH(td, rqh, td_runq) {
 	// }
 	if (!TAILQ_EMPTY(rqh)) {
@@ -520,7 +520,7 @@ runq_choose_from(struct runq *rq, u_char idx)
 	}
 	CTR1(KTR_RUNQ, "runq_choose_from: idlethread pri=%d", pri);
 
-	rqh = rq->rq_usr;
+	rqh = &rq->rq_usr;
 	// TAILQ_FOREACH(td, rqh, td_runq) {
 	// }
 	if (!TAILQ_EMPTY(rqh)) {
@@ -548,7 +548,7 @@ runq_remove_idx(struct runq *rq, struct thread *td, u_char *idx)
 	u_char pri;
 
 	if (td->td_proc->p_pid) {
-		rqh = rq->rq_usr;
+		rqh = &rq->rq_usr;
 		TAILQ_REMOVE(rqh, td, td_runq);
 	}
 
