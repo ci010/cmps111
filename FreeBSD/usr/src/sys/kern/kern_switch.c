@@ -536,10 +536,8 @@ runq_choose(struct runq *rq)
 		// 		return (td);
 		// 	}
 		// }
-		if (td == NULL) {
-			td = TAILQ_FIRST(rqh);
+		td = TAILQ_FIRST(rqh);
 			// log(7, "[Lottery] Hmmmm..... rnd not worked\n");
-		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
 	}
@@ -578,10 +576,8 @@ runq_choose_from(struct runq *rq, u_char idx)
 		// 		return (td);
 		// 	}
 		// }
-		if (td == NULL) {
-			td = TAILQ_FIRST(rqh);
+		td = TAILQ_FIRST(rqh);
 			// log(7, "[Lottery] Hmmmm..... rnd not worked\n");
-		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
 	}
