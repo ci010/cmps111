@@ -462,7 +462,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 	TDQ_LOCK_ASSERT(tdq, MA_OWNED);
 	THREAD_LOCK_ASSERT(td, MA_OWNED);
 
-	log(7, "[Add] PID: %d, TID: %d\n", td->td_proc->p_pid, td->td_tid);
+	// log(7, "[Add] PID: %d, TID: %d\n", td->td_proc->p_pid, td->td_tid);
 	pri = td->td_priority;
 	ts = td_get_sched(td);
 	TD_SET_RUNQ(td);
