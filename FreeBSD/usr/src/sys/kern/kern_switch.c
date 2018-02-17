@@ -533,7 +533,7 @@ runq_choose(struct runq *rq)
 			sum += td->td_ticket;
 			if (sum > r) {
 				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-				log(7, "[Lottory] Found: %d with %d, the rnd is %d\n", td->td_tid, r->td_ticket, r);
+				log(7, "[Lottory] Found: %d with %d, the rnd is %d\n", td->td_tid, td->td_ticket, r);
 				// return (td);
 			}
 		}
@@ -574,7 +574,7 @@ runq_choose_from(struct runq *rq, u_char idx)
 			sum += td->td_ticket;
 			if (sum > r) {
 				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-				log(7, "[Lottory] Found: %d with %d, the rnd is %d\n", td->td_tid, r->td_ticket, r);
+				log(7, "[Lottory] Found: %d with %d, the rnd is %d\n", td->td_tid, td->td_ticket, r);
 				// return (td);
 			}
 		}
