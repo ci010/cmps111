@@ -271,7 +271,7 @@ runq_rnd_update() {
 static u_long
 runq_rnd() {
 	runq_rnd_dirty = 1;
-	if (rnd_piov == 256) {
+	if (rnd_piov == 255) {
 		rnd_piov = 0;
 	}
 	return runq_rnd_pool[rnd_piov++];
@@ -536,6 +536,10 @@ runq_choose(struct runq *rq)
 				return (td);
 			}
 		}
+		if (td == NULL) {
+			td = TAILQ_FIRST(rqh);
+			log(7, "[Lottery] Hmmmm..... rnd not worked\n");
+		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
 	}
@@ -573,6 +577,10 @@ runq_choose_from(struct runq *rq, u_char idx)
 			if (sum > r) {
 				return (td);
 			}
+		}
+		if (td == NULL) {
+			td = TAILQ_FIRST(rqh);
+			log(7, "[Lottery] Hmmmm..... rnd not worked\n");
 		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
