@@ -525,8 +525,8 @@ runq_choose(struct runq *rq)
 
 	rqh = &rq->rq_usr;
 	if (!TAILQ_EMPTY(rqh)) {
-		u_long sum;
-		u_long r;
+		// u_long sum;
+		// u_long r;
 
 		// sum = 0;
 		// r = runq_rnd() % rq->rq_tickets;
@@ -538,7 +538,7 @@ runq_choose(struct runq *rq)
 		// }
 		if (td == NULL) {
 			td = TAILQ_FIRST(rqh);
-			log(7, "[Lottery] Hmmmm..... rnd not worked\n");
+			// log(7, "[Lottery] Hmmmm..... rnd not worked\n");
 		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
@@ -567,8 +567,8 @@ runq_choose_from(struct runq *rq, u_char idx)
 
 	rqh = &rq->rq_usr;
 	if (!TAILQ_EMPTY(rqh)) {
-		u_long sum;
-		u_long r;
+		// u_long sum;
+		// u_long r;
 
 		// sum = 0;
 		// r = runq_rnd() % rq->rq_tickets;
@@ -580,7 +580,7 @@ runq_choose_from(struct runq *rq, u_char idx)
 		// }
 		if (td == NULL) {
 			td = TAILQ_FIRST(rqh);
-			log(7, "[Lottery] Hmmmm..... rnd not worked\n");
+			// log(7, "[Lottery] Hmmmm..... rnd not worked\n");
 		}
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
