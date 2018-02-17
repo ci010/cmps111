@@ -61,7 +61,7 @@ struct runq {
 	struct	rqbits rq_status;
 	struct  rqhead rq_usr;
 
-	u_int rq_tickets;
+	u_long rq_tickets;
 	struct	rqhead rq_queues[RQ_NQS];
 };
 
