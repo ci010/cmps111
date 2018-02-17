@@ -2018,6 +2018,7 @@ sched_lottery(struct thread *td) {
     u_char prio = td->td_priority;
     log(7, "[Lottery] Priority: %d\n", prio);
     log(7, "[Lottery] Nice: %d\n", td->td_proc->p_nice);
+	log(7, "[Lottery] Thread Id: %d\n", td->td_tid);
 }
 
 
