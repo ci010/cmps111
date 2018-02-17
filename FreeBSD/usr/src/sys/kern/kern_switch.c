@@ -487,7 +487,6 @@ runq_choose(struct runq *rq)
 	// TAILQ_FOREACH(td, rqh, td_runq) {
 	// }
 	if (!TAILQ_EMPTY(rqh)) {
-		log(7, "[lott] choosing, q is not empty!\n");
 		td = TAILQ_FIRST(rqh);
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
@@ -518,7 +517,6 @@ runq_choose_from(struct runq *rq, u_char idx)
 	// TAILQ_FOREACH(td, rqh, td_runq) {
 	// }
 	if (!TAILQ_EMPTY(rqh)) {
-		log(7, "[lott] choosing, q is not empty!\n");
 		td = TAILQ_FIRST(rqh);
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
