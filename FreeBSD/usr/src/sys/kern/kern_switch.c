@@ -518,7 +518,7 @@ runq_choose_lott(struct runq* rq) {
 		// 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		// 		return (td);
 		// 	}
-		// 	sum += td->td_ticket;
+			sum += td->td_ticket;
 		}
 		td = TAILQ_FIRST(rqh);
 		return (td);
