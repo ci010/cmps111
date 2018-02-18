@@ -1534,7 +1534,7 @@ sched_lottery(struct thread *td) {
 		diff = -(td->td_ticket / 2);
 	}
 	td->td_ticket = imax(1, imin(td->td_ticket + diff, MAX_LOTTERY_TICKET));
-    log(7, "[Lottery][%d] Priority: %d, Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, pri, score, diff, td->td_ticket);
+    log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
 }
 
 /*
