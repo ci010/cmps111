@@ -261,7 +261,7 @@ runq_rnd_update(struct runq *rq) {
 static u_long
 runq_rnd(struct runq *rq) {
 	int idx;
-	
+
 	rq->rq_rnd_dirty = 1;
 	idx = rq->rq_rnd_piov % 256;
 	rq->rq_rnd_piov = idx + 1;
@@ -504,7 +504,7 @@ runq_choose_fuzz(struct runq *rq, int fuzz)
 	return (NULL);
 }
 
-struct thread *
+static struct thread *
 runq_choose_lott(struct runq* rq) {
 	struct rqhead *rqh;
 	struct thread *td;
@@ -552,24 +552,7 @@ runq_choose(struct runq *rq)
 	}
 	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
 
-	// rqh = &rq->rq_usr;
-	// u_long sum;
-	// u_long r;
-	// if (!TAILQ_EMPTY(rqh)) {
-	// 	sum = 0;
-	// 	r = random() % rq->rq_tickets;
-		
-	// 	TAILQ_FOREACH(td, rqh, td_runq) {
-	// 		if (sum >= r) {
-	// 			KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-	// 			return (td);
-	// 		}
-	// 		sum += td->td_ticket;
-	// 	}
-	// 	return (NULL);
-	// }
-
-	return (NULL);
+	return runq_choose_lott(rq);
 }
 
 struct thread *
@@ -590,7 +573,7 @@ runq_choose_from(struct runq *rq, u_char idx)
 	}
 	CTR1(KTR_RUNQ, "runq_choose_from: idlethread pri=%d", pri);
 
-	return (NULL);
+	return runq_choose_lott(rq);
 }
 /*
  * Remove the thread from the queue specified by its priority, and clear the

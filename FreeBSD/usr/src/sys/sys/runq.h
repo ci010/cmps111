@@ -76,7 +76,7 @@ struct	thread *runq_choose(struct runq *);
 struct	thread *runq_choose_from(struct runq *, u_char);
 struct	thread *runq_choose_fuzz(struct runq *, int);
 
-struct 	thread *runq_choose_lott(struct runq*);
+// struct 	thread *runq_choose_lott(struct runq*);
 
 void	runq_init(struct runq *);
 void	runq_remove(struct runq *, struct thread *);

@@ -1339,17 +1339,17 @@ tdq_choose(struct tdq *tdq)
 		return (td);
 	}
 
-	td = runq_choose_lott(&tdq->tdq_realtime);
-	if (td != NULL)
-		return (td);
-	td = runq_choose_lott(&tdq->tdq_timeshare);
-	if (td != NULL) {
-		return (td);
-	}
-	td = runq_choose_lott(&tdq->tdq_idle);
-	if (td != NULL) {
-		return (td);
-	}
+	// td = runq_choose_lott(&tdq->tdq_realtime);
+	// if (td != NULL)
+	// 	return (td);
+	// td = runq_choose_lott(&tdq->tdq_timeshare);
+	// if (td != NULL) {
+	// 	return (td);
+	// }
+	// td = runq_choose_lott(&tdq->tdq_idle);
+	// if (td != NULL) {
+	// 	return (td);
+	// }
 
 	return (NULL);
 }
@@ -1520,7 +1520,7 @@ sched_interact_score(struct thread *td)
 
 #define MAX_LOTTERY_TICKET 10000
 #define MIN_LOTTERY_TICKET 1
-#define DEFAULT_LOTTERY_INCR 70
+#define DEFAULT_LOTTERY_INCR 57
 
 static void
 sched_lottery(struct thread *td) {
@@ -1534,7 +1534,7 @@ sched_lottery(struct thread *td) {
 		diff = -(td->td_ticket / 4);
 	}
 	td->td_ticket = imax(1, imin(td->td_ticket + diff, MAX_LOTTERY_TICKET));
-    log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
+    // log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
 }
 
 /*
