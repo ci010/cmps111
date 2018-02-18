@@ -522,11 +522,11 @@ runq_choose_lott(struct runq* rq) {
 				return (td);
 			}
 		}
-		// if (td != NULL) {
-		// 	return (td);
-		// }
-		// td = TAILQ_FIRST(rqh);
-		// log(7, "[lott] rq_tickets: %lu, r: %lu, sum: %lu, tid: %d, ticket: %d\n", rq->rq_tickets, r, sum, td->td_tid, td->td_ticket);
+		if (td != NULL) {
+			return (td);
+		}
+		td = TAILQ_FIRST(rqh);
+		log(7, "[lott] rnd not working....\n");
 		return (td);
 	}
 	return (NULL);
