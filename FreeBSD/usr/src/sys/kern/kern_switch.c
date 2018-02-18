@@ -520,7 +520,8 @@ runq_choose_lott(struct runq* rq) {
 		// 	}
 		// 	sum += td->td_ticket;
 		// }
-		return TAILQ_FIRST(rqh);
+		td = TAILQ_FIRST(rqh);
+		return (td);
 	}
 	return (NULL);
 }
