@@ -529,7 +529,7 @@ runq_choose_lott(struct runq* rq) {
 			return (td);
 		}
 		td = TAILQ_FIRST(rqh);
-		log(7, "[lott] rq_tickets: %lu, r: %lu, sum: %lu, tid: %d, ticket: %d\n", rq->rq_tickets, r, sum, td->td_tid, td->td_ticket);
+		// log(7, "[lott] rq_tickets: %lu, r: %lu, sum: %lu, tid: %d, ticket: %d\n", rq->rq_tickets, r, sum, td->td_tid, td->td_ticket);
 		return (td);
 	}
 	return (NULL);
