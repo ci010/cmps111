@@ -1518,6 +1518,16 @@ sched_interact_score(struct thread *td)
 
 }
 
+#define MAX_LOTTERY_TICKET 10000
+#define MIN_LOTTERY_TICKET 1
+
+static void
+sched_lottery(struct thread *td, int score, int pri) {
+    u_char prio = td->td_priority;
+
+    log(7, "[Lottery] Priority: %d, Score: %d, Thread Id: %d, Ticket: %d\n", prio, score, td->td_tid, td->td_ticket);
+}
+
 /*
  * Scale the scheduling priority according to the "interactivity" of this
  * process.
@@ -1564,6 +1574,7 @@ sched_priority(struct thread *td)
 		    td_get_sched(td)->ts_ftick, td_get_sched(td)->ts_ltick,
 		    SCHED_PRI_TICKS(td_get_sched(td))));
 	}
+	sched_lottery(td, score, pri);
 	sched_user_prio(td, pri);
 
 	return;
@@ -2026,12 +2037,6 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 }
 
 
-static void
-sched_lottery(struct thread *td) {
-    u_char prio = td->td_priority;
-    log(7, "[Lottery] Priority: %d, Nice: %d, Thread Id: %d, Pid: %d\n", prio, td->td_proc->p_nice,td->td_tid, td->td_proc->p_pid);
-}
-
 
 /*
  * Adjust thread priorities as a result of a nice request.
@@ -2047,7 +2052,6 @@ sched_nice(struct proc *p, int nice)
 	FOREACH_THREAD_IN_PROC(p, td) {
 		thread_lock(td);
 		sched_priority(td);
-		sched_lottery(td);
 		sched_prio(td, td->td_base_user_pri);
 		thread_unlock(td);
 	}
