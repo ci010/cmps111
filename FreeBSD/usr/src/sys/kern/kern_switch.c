@@ -267,8 +267,8 @@ runq_rnd(struct runq *rq) {
 	}
 	idx = rq->rq_rnd_piov % 256;
 	rq->rq_rnd_piov++;
-	log(7, "[lottery] piv: %d\n", idx);
-	return random();
+	log(7, "[lottery] value: %d\n", rq->rq_rnd_pool[idx]);
+	return rq->rq_rnd_pool[idx];
 }
 
 /*
