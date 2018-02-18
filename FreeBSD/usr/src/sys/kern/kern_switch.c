@@ -389,7 +389,7 @@ runq_add(struct runq *rq, struct thread *td, int flags)
 		rqh = &rq->rq_usr;
 		TAILQ_INSERT_TAIL(rqh, td, td_runq);
 		rq->rq_tickets += td->td_ticket;
-		runq_rnd_update();
+		runq_rnd_update(rq);
 		return;
 	}
 
@@ -415,7 +415,7 @@ runq_add_pri(struct runq *rq, struct thread *td, u_char pri, int flags)
 		rqh = &rq->rq_usr;
 		TAILQ_INSERT_TAIL(rqh, td, td_runq);
 		rq->rq_tickets += td->td_ticket;
-		runq_rnd_update();
+		runq_rnd_update(rq);
 		return;
 	}
 
@@ -521,14 +521,14 @@ runq_choose(struct runq *rq)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd() % rq->rq_tickets;
+		r = runq_rnd(rq) % rq->rq_tickets;
 		
 		// TAILQ_FOREACH(td, rqh, td_runq) {
-		// 	sum += td->td_ticket;
 		// 	if (sum > r) {
 		// 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		// 		return (td);
 		// 	}
+		// 	sum += td->td_ticket;
 		// }
 		td = TAILQ_FIRST(rqh);
 		log(7, "[Lottery] Hmmmm..... rnd not worked\n");
@@ -562,7 +562,7 @@ runq_choose_from(struct runq *rq, u_char idx)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd() % rq->rq_tickets;
+		r = runq_rnd(rq) % rq->rq_tickets;
 		// TAILQ_FOREACH(td, rqh, td_runq) {
 		// 	sum += td->td_ticket;
 		// 	if (sum > r) {
@@ -599,7 +599,7 @@ runq_remove_idx(struct runq *rq, struct thread *td, u_char *idx)
 		rqh = &rq->rq_usr;
 		TAILQ_REMOVE(rqh, td, td_runq);
 		rq->rq_tickets -= td->td_ticket;
-		runq_rnd_update();
+		runq_rnd_update(rq);
 		return;
 	}
 
