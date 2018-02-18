@@ -251,6 +251,7 @@ runq_rnd_update(struct runq *rq) {
 	int i;
 	int limit;
 
+	limit = rq->rq_rnd_piov % 256;
 	for (i = 0; i < limit; ++i) {
 		rq->rq_rnd_pool[i] = random();
 	}
