@@ -515,7 +515,8 @@ runq_choose_lott(struct runq* rq) {
 		r = random() % rq->rq_tickets;
 		TAILQ_FOREACH(td, rqh, td_runq) {
 			if (sum >= r) {
-				return (td);
+				log(7, "[lott] ticket: %d\n", td->td_ticket);
+				// return (td);
 			}
 			sum += td->td_ticket;
 		}
