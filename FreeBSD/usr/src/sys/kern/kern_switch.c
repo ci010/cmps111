@@ -392,6 +392,9 @@ runq_add(struct runq *rq, struct thread *td, int flags)
 
 	if (td->td_proc->p_pid) {
 		rqh = &rq->rq_usr;
+		if (td->td_ticket <= 0) {
+			td->td_ticket = 500;
+		}
 		TAILQ_INSERT_TAIL(rqh, td, td_runq);
 		rq->rq_tickets += td->td_ticket;
 		runq_rnd_update(rq);
