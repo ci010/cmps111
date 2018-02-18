@@ -246,28 +246,28 @@ critical_exit(void)
 
 static void
 runq_rnd_update(struct runq *rq) {
-	if (!rq->rq_rnd_dirty) return;
-	if (!rq->rq_rnd_piov) return;
-	int i;
-	int limit;
+	// if (!rq->rq_rnd_dirty) return;
+	// if (!rq->rq_rnd_piov) return;
+	// int i;
+	// int limit;
 
-	limit = rq->rq_rnd_piov % 256;
-	for (i = 0; i < limit; ++i) {
-		rq->rq_rnd_pool[i] = random();
-	}
-	rq->rq_rnd_dirty = 0;
+	// limit = rq->rq_rnd_piov % 256;
+	// for (i = 0; i < limit; ++i) {
+	// 	rq->rq_rnd_pool[i] = random();
+	// }
+	// rq->rq_rnd_dirty = 0;
 }
 
 static u_long
 runq_rnd(struct runq *rq) {
-	int idx;
-	rq->rq_rnd_dirty = 1;
-	if (rq->rq_rnd_piov >= 128) {
-		rq->rq_rnd_piov = 0;
-	}
-	idx = rq->rq_rnd_piov % 256;
-	rq->rq_rnd_piov++;
-	log(7, "[lottery] piv: %d\n", idx);
+	// int idx;
+	// rq->rq_rnd_dirty = 1;
+	// if (rq->rq_rnd_piov >= 128) {
+	// 	rq->rq_rnd_piov = 0;
+	// }
+	// idx = rq->rq_rnd_piov % 256;
+	// rq->rq_rnd_piov++;
+	// log(7, "[lottery] piv: %d\n", idx);
 	return random();
 }
 
@@ -502,7 +502,7 @@ runq_choose_fuzz(struct runq *rq, int fuzz)
 }
 
 struct thread *
-runq_choose_lott(struct runq*) {
+runq_choose_lott(struct runq* rq) {
 	struct rqhead *rqh;
 	struct thread *td;
 	u_long sum;
