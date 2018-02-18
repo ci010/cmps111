@@ -512,7 +512,7 @@ runq_choose_lott(struct runq* rq) {
 	u_long r;
 
 	rqh = &rq->rq_usr;
-	
+
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
 		r = runq_rnd(rq) % rq->rq_tickets;
@@ -526,7 +526,10 @@ runq_choose_lott(struct runq* rq) {
 			return (td);
 		}
 		td = TAILQ_FIRST(rqh);
-		log(7, "[lott] rnd not working.... sum: %lu, r: %lu\n, total: %lu", sum, r, rq->rq_tickets);
+		log(7, "[lott] rnd not working.... try to debug...\n sum: %lu, r: %lu, total: %lu\n iterating the q:", sum, r, rq->rq_tickets);
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			log(7, "[lott q] tid: %d, ticket: %d\n", td->td_tid, td->td_ticket);
+		}
 		return (td);
 	}
 	return (NULL);
