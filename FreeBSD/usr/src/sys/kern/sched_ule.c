@@ -1520,7 +1520,7 @@ sched_interact_score(struct thread *td)
 
 #define MAX_LOTTERY_TICKET 10000
 #define MIN_LOTTERY_TICKET 1
-#define DEFAULT_LOTTERY_INCR 100
+#define DEFAULT_LOTTERY_INCR 70
 
 static void
 sched_lottery(struct thread *td) {
@@ -1529,9 +1529,9 @@ sched_lottery(struct thread *td) {
 
 	score = imax(0, sched_interact_score(td) + td->td_proc->p_nice);
 	if (score < sched_interact) { // if this is an interactive thread
-		diff = DEFAULT_LOTTERY_INCR - 50;
+		diff = DEFAULT_LOTTERY_INCR - score;
 	} else {
-		diff = -(td->td_ticket / 2);
+		diff = -(td->td_ticket / 4);
 	}
 	td->td_ticket = imax(1, imin(td->td_ticket + diff, MAX_LOTTERY_TICKET));
     log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
