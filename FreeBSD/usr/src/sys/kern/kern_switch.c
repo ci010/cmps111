@@ -275,7 +275,7 @@ runq_rnd() {
 	if (rnd_piov >= 128) {
 		rnd_piov = 0;
 	}
-	return runq_rnd_pool[rnd_piov++];
+	return random();
 }
 
 /*
