@@ -281,9 +281,9 @@ runq_init(struct runq *rq)
 	rq->rq_tickets = 0;
 	rq->rnd_piov = 0;
 	for (i = 0; i < 256; ++i) {
-		runq_rnd_pool[i] = random();
+		rq->runq_rnd_pool[i] = random();
 	}
-	runq_rnd_dirty = 0;
+	rq->runq_rnd_dirty = 0;
 }
 
 /*
