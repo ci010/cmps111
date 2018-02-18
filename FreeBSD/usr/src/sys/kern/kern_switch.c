@@ -526,7 +526,7 @@ runq_choose_lott(struct runq* rq) {
 			return (td);
 		}
 		td = TAILQ_FIRST(rqh);
-		log(7, "[lott] rnd not working....\n");
+		log(7, "[lott] rnd not working.... sum: %lu, r: %lu\n, total: %lu", sum, r, rq->rq_tickets);
 		return (td);
 	}
 	return (NULL);
