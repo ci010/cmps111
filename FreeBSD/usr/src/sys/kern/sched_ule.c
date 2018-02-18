@@ -1525,11 +1525,10 @@ sched_interact_score(struct thread *td)
 static void
 sched_lottery(struct thread *td, int score, int pri) {
 	int diff;
-	nice = td->td_proc->p_nice;
 	if (score < sched_interact) { // if this is an interactive thread
 		diff = DEFAULT_LOTTERY_INCR - 50;
 	} else {
-		diff = -(td_ticket / 2);
+		diff = -(td->td_ticket / 2);
 	}
 	td->td_ticket = imin(0, imax(td->td_ticket + diff, MAX_LOTTERY_TICKET));
     log(7, "[Lottery][%d] Priority: %d, Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, pri, score, diff, td->td_ticket);
