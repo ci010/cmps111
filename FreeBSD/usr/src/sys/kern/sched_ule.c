@@ -2036,7 +2036,7 @@ sched_lottery(struct thread *td) {
     if (TD_ON_RUNQ(td)) {
 		tdq = TDQ_CPU(td_get_sched(td)->ts_cpu);
 		ts = td_get_sched(td);
-		tdq->ts_runq->rq_tickets += diff;
+		ts->ts_runq->rq_tickets += diff;
     }
     // log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
 }
