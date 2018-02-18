@@ -529,11 +529,10 @@ runq_choose(struct runq *rq)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd_pool[0];
 		r = runq_rnd();
-		log(7, "[Lottory] rnd: %lu\n", r);
-		r = r % rq->rq_tickets;
-		log(7, "!![Lottory] rnd: %lu\n", r);
+		// log(7, "[Lottory] rnd: %lu\n", r);
+		// r = r % rq->rq_tickets;
+		// log(7, "!![Lottory] rnd: %lu\n", r);
 		// TAILQ_FOREACH(td, rqh, td_runq) {
 		// 	sum += td->td_ticket;
 		// 	if (sum > r) {
@@ -574,11 +573,8 @@ runq_choose_from(struct runq *rq, u_char idx)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd_pool[0];
 		r = runq_rnd();
-		log(7, "[Lottory] rnd: %lu\n", r);
-		r = r % rq->rq_tickets;
-		log(7, "!![Lottory] rnd: %lu\n", r);
+		// r = r % rq->rq_tickets;
 		// TAILQ_FOREACH(td, rqh, td_runq) {
 		// 	sum += td->td_ticket;
 		// 	if (sum > r) {
