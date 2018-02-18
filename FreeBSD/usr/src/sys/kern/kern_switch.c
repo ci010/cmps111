@@ -275,6 +275,8 @@ runq_rnd() {
 	if (rnd_piov >= 128) {
 		rnd_piov = 0;
 	}
+	rnd_piov++;
+	log(7, "[lottery] piv: %d\n", rnd_piov);
 	return random();
 }
 
@@ -529,20 +531,16 @@ runq_choose(struct runq *rq)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd();
-		// log(7, "[Lottory] rnd: %lu\n", r);
-		// r = r % rq->rq_tickets;
-		// log(7, "!![Lottory] rnd: %lu\n", r);
-		// TAILQ_FOREACH(td, rqh, td_runq) {
-		// 	sum += td->td_ticket;
-		// 	if (sum > r) {
-		// 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-		// 		log(7, "[Lottory] Found: %d with %d, the rnd is %lu\n", td->td_tid, td->td_ticket, r);
-		// 		// return (td);
-		// 	}
-		// }
+		r = runq_rnd() % rq->rq_tickets;
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			sum += td->td_ticket;
+			if (sum > r) {
+				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
+				return (td);
+			}
+		}
 		td = TAILQ_FIRST(rqh);
-			// log(7, "[Lottery] Hmmmm..... rnd not worked\n");
+		log(7, "[Lottery] Hmmmm..... rnd not worked\n");
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
 	}
@@ -573,18 +571,16 @@ runq_choose_from(struct runq *rq, u_char idx)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd();
-		// r = r % rq->rq_tickets;
-		// TAILQ_FOREACH(td, rqh, td_runq) {
-		// 	sum += td->td_ticket;
-		// 	if (sum > r) {
-		// 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-		// 		log(7, "[Lottory] Found: %d with %d, the rnd is %lu\n", td->td_tid, td->td_ticket, r);
-		// 		// return (td);
-		// 	}
-		// }
+		r = runq_rnd() % rq->rq_tickets;
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			sum += td->td_ticket;
+			if (sum > r) {
+				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
+				return (td);
+			}
+		}
 		td = TAILQ_FIRST(rqh);
-			// log(7, "[Lottery] Hmmmm..... rnd not worked\n");
+		log(7, "[Lottery] Hmmmm..... rnd not worked\n");
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
 		return (td);
 	}
