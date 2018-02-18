@@ -62,9 +62,9 @@ struct runq {
 	struct  rqhead rq_usr;
 
 	u_long rq_tickets;
-	u_long runq_rnd_pool[256];
-	int rnd_piov;
-	char runq_rnd_dirty;
+	u_long rq_rnd_pool[256];
+	int rq_rnd_piov;
+	char rq_rnd_dirty;
 
 	struct	rqhead rq_queues[RQ_NQS];
 };

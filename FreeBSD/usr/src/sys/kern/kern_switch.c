@@ -246,23 +246,27 @@ critical_exit(void)
 
 static void
 runq_rnd_update(struct runq *rq) {
-	if (!rq->runq_rnd_dirty) return;
-	if (!rq->rnd_piov) return;
+	if (!rq->rq_rnd_dirty) return;
+	if (!rq->rq_rnd_piov) return;
 	int i;
-	for (i = 0; i < rq->rnd_piov; ++i) {
-		rq->runq_rnd_pool[i] = random();
+	int limit;
+
+	for (i = 0; i < limit; ++i) {
+		rq->rq_rnd_pool[i] = random();
 	}
-	rq->runq_rnd_dirty = 0;
+	rq->rq_rnd_dirty = 0;
 }
 
 static u_long
 runq_rnd(struct runq *rq) {
-	rq->runq_rnd_dirty = 1;
-	if (rq->rnd_piov >= 128) {
-		rq->rnd_piov = 0;
+	int idx;
+	rq->rq_rnd_dirty = 1;
+	if (rq->rq_rnd_piov >= 128) {
+		rq->rq_rnd_piov = 0;
 	}
-	// rnd_piov++;
-	// log(7, "[lottery] piv: %d\n", rnd_piov);
+	idx = rq->rq_rnd_piov % 256;
+	rq->rq_rnd_piov++;
+	log(7, "[lottery] piv: %d\n", idx);
 	return random();
 }
 
@@ -279,11 +283,11 @@ runq_init(struct runq *rq)
 		TAILQ_INIT(&rq->rq_queues[i]);
 	TAILQ_INIT(&rq->rq_usr);
 	rq->rq_tickets = 0;
-	rq->rnd_piov = 0;
+	rq->rq_rnd_piov = 0;
 	for (i = 0; i < 256; ++i) {
-		rq->runq_rnd_pool[i] = random();
+		rq->rq_rnd_pool[i] = random();
 	}
-	rq->runq_rnd_dirty = 0;
+	rq->rq_rnd_dirty = 0;
 }
 
 /*
@@ -521,15 +525,15 @@ runq_choose(struct runq *rq)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd(rq) % rq->rq_tickets;
+		r = random() % rq->rq_tickets;
 		
-		// TAILQ_FOREACH(td, rqh, td_runq) {
-		// 	if (sum > r) {
-		// 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-		// 		return (td);
-		// 	}
-		// 	sum += td->td_ticket;
-		// }
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			sum += td->td_ticket;
+			if (sum > r) {
+				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
+				return (td);
+			}
+		}
 		td = TAILQ_FIRST(rqh);
 		log(7, "[Lottery] Hmmmm..... rnd not worked\n");
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
@@ -562,14 +566,14 @@ runq_choose_from(struct runq *rq, u_char idx)
 	u_long r;
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd(rq) % rq->rq_tickets;
-		// TAILQ_FOREACH(td, rqh, td_runq) {
-		// 	sum += td->td_ticket;
-		// 	if (sum > r) {
-		// 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-		// 		return (td);
-		// 	}
-		// }
+		r = random() % rq->rq_tickets;
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			sum += td->td_ticket;
+			if (sum > r) {
+				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
+				return (td);
+			}
+		}
 		td = TAILQ_FIRST(rqh);
 		log(7, "[Lottery] Hmmmm..... rnd not worked\n");
 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
