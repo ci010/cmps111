@@ -1506,25 +1506,6 @@ sched_interact_score(struct thread *td)
 
 }
 
-#define MAX_LOTTERY_TICKET 10000
-#define MIN_LOTTERY_TICKET 1
-#define DEFAULT_LOTTERY_INCR 57
-
-static void
-sched_lottery(struct thread *td) {
-	int score;
-	int diff;
-
-	score = imax(0, sched_interact_score(td) + td->td_proc->p_nice);
-	if (score < sched_interact) { // if this is an interactive thread
-		diff = DEFAULT_LOTTERY_INCR - score;
-	} else {
-		diff = -(td->td_ticket / 4);
-	}
-	td->td_ticket = imax(1, imin(td->td_ticket + diff, MAX_LOTTERY_TICKET));
-    // log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
-}
-
 /*
  * Scale the scheduling priority according to the "interactivity" of this
  * process.
@@ -1537,10 +1518,6 @@ sched_priority(struct thread *td)
 
 	if (PRI_BASE(td->td_pri_class) != PRI_TIMESHARE)
 		return;
-	if (td->td_proc->p_pid) {
-		sched_lottery(td);
-		return;
-	}
 	/*
 	 * If the score is interactive we place the thread in the realtime
 	 * queue with a priority that is less than kernel and interrupt
@@ -2037,6 +2014,29 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 }
 
 
+#define MAX_LOTTERY_TICKET 10000
+#define MIN_LOTTERY_TICKET 1
+#define DEFAULT_LOTTERY_INCR 57
+
+static void
+sched_lottery(struct thread *td) {
+	int score;
+	int diff;
+	struct tdq *tdq;
+
+	score = imax(0, sched_interact_score(td) + td->td_proc->p_nice);
+	if (score < sched_interact) { // if this is an interactive thread
+		diff = DEFAULT_LOTTERY_INCR - score;
+	} else {
+		diff = -(td->td_ticket / 4);
+	}
+	td->td_ticket = imax(1, imin(td->td_ticket + diff, MAX_LOTTERY_TICKET));
+    if (TD_ON_RUNQ(td)) {
+		tdq = TDQ_CPU(td_get_sched(td)->ts_cpu);
+		tdq->runq->rq_tickets += diff;
+    }
+    // log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
+}
 
 /*
  * Adjust thread priorities as a result of a nice request.
@@ -2051,6 +2051,7 @@ sched_nice(struct proc *p, int nice)
 	p->p_nice = nice;
 	FOREACH_THREAD_IN_PROC(p, td) {
 		thread_lock(td);
+		sched_lottery(td);
 		sched_priority(td);
 		sched_prio(td, td->td_base_user_pri);
 		thread_unlock(td);
