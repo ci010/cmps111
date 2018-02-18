@@ -1,0 +1,66 @@
+# Design Document for Lottery Scheduling
+
+- [Design Document for Lottery Scheduling](#design-document-for-lottery-scheduling)
+        - [runq](#runq)
+        - [thread](#thread)
+        - [scheduler](#scheduler)
+
+### runq
+
+I add sereral fileds to `struct runq`. 
+
+| Added Field  | Type        | Usage                                               |
+| ------------ | ----------- | --------------------------------------------------- |
+| rq_tickets   | u_long      | Hold the total lottery ticket of this queue.        |
+| rq_rnd_pool  | u_long[256] | Hold the many random numbers as a pool.             |
+| rq_rnd_piov  | int         | Indicate the current random number index            |
+| rq_rnd_dirty | char        | Indicate if the pool requires update (regeneration) |
+
+The random is managed in `runq`. Each time it generates a random number for lottery, it will pick up a number under the `rq_rnd_piov` from `rq_rnd_pool` and mark the pool dirty by `rq_rnd_dirty`.
+
+The dirty pool will be updated when new thread comes in or thread goes out. Notice that only the elements before the `rq_rnd_piov` index will be re-random.
+
+It has such modified functions:
+
+| Function              | Usage                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| runq_add/runq_add_pri | Hook the head of function. Add to our queue if the thread is a user thread.        |
+| runq_choose           | Hook the tail of function. Compute the lottery to choose thread in necessary.      |
+| runq_remove_idx       | Hook the head of function. Remove the thread from our queue if the thread is user. |
+| runq_init             | At the end of init. Add some code to init the runq additional fields.              |
+
+Hook on add/remove will toggle the refresh of random. Also, it causes the runq total tickets changes.
+The `runq_choose` hooks our core algorithm function `runq_choose_lott`.
+
+It has such addition functions:
+
+| Function         | Usage                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| runq_choose_lott | The core algorithm of choosing thread. Use a random number and thread tickets to choose the thread |
+| runq_rnd_update  | Update the random number before the pivot in the random pool if the pool is dirty.                 |
+| runq_rnd         | Get one random number from pool, and mark pool dirty.                                              |
+
+                               |
+
+### thread
+
+I add a field to `struct thread`:
+
+| Added Field | Type  | Usage                           |
+| ----------- | ----- | ------------------------------- |
+| td_ticket   | u_int | Hold the ticket of this thread. |
+
+The ticket is read by `runq` and managed by `scheduler`
+
+### scheduler
+
+The scheduler is 
+
+| Function      | Type     | Usage                                                            |
+| ------------- | -------- | ---------------------------------------------------------------- |
+| sched_nice    | Modified | Foreach thread, hook the function sched_lottery.                 |
+| sched_lottery | Created  | Adjust the ticket value of thread by thread's interactive score. |
+
+The `sched_lottery` is the algorithm decide the reward or punish the thread, by the interactive score. The interactive thread's ticket will linearly grow by it score, and the timeshare thread's ticket will be cut by 1/4 generally.
+
+

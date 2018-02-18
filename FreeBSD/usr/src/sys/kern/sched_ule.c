@@ -2016,7 +2016,7 @@ sched_switch(struct thread *td, struct thread *newtd, int flags)
 
 #define MAX_LOTTERY_TICKET 10000
 #define MIN_LOTTERY_TICKET 1
-#define DEFAULT_LOTTERY_INCR 57
+#define DEFAULT_LOTTERY_INCR 77
 
 static void
 sched_lottery(struct thread *td) {
@@ -2025,7 +2025,6 @@ sched_lottery(struct thread *td) {
 	struct tdq *tdq;
 	struct td_sched *ts;
 
-
 	score = imax(0, sched_interact_score(td) + td->td_proc->p_nice);
 	if (score < sched_interact) { // if this is an interactive thread
 		diff = DEFAULT_LOTTERY_INCR - score;
@@ -2033,7 +2032,7 @@ sched_lottery(struct thread *td) {
 		diff = -(td->td_ticket / 4);
 	}
 	td->td_ticket = imax(1, imin(td->td_ticket + diff, MAX_LOTTERY_TICKET));
-    if (TD_ON_RUNQ(td)) {
+    if (TD_ON_RUNQ(td)) { // if its in runq, update the total tickets
 		tdq = TDQ_CPU(td_get_sched(td)->ts_cpu);
 		ts = td_get_sched(td);
 		ts->ts_runq->rq_tickets += diff;
