@@ -272,7 +272,7 @@ runq_rnd_update() {
 static u_long
 runq_rnd() {
 	runq_rnd_dirty = 1;
-	if (rnd_piov == 255) {
+	if (rnd_piov >= 128) {
 		rnd_piov = 0;
 	}
 	return runq_rnd_pool[rnd_piov++];
@@ -530,8 +530,10 @@ runq_choose(struct runq *rq)
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
 		r = runq_rnd_pool[0];
-		// r = runq_rnd() % rq->rq_tickets;
-		log(7, "[Lottory] rnd: %lu", r);
+		r = runq_rnd();
+		log(7, "[Lottory] rnd: %lu\n", r);
+		r = r % rq->rq_tickets
+		log(7, "!![Lottory] rnd: %lu\n", r);
 		// TAILQ_FOREACH(td, rqh, td_runq) {
 		// 	sum += td->td_ticket;
 		// 	if (sum > r) {
@@ -573,8 +575,10 @@ runq_choose_from(struct runq *rq, u_char idx)
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
 		r = runq_rnd_pool[0];
-		// r = runq_rnd() % rq->rq_tickets;
-		log(7, "[Lottory] rnd: %lu", r);
+		r = runq_rnd();
+		log(7, "[Lottory] rnd: %lu\n", r);
+		r = r % rq->rq_tickets
+		log(7, "!![Lottory] rnd: %lu\n", r);
 		// TAILQ_FOREACH(td, rqh, td_runq) {
 		// 	sum += td->td_ticket;
 		// 	if (sum > r) {
