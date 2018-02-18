@@ -1523,8 +1523,11 @@ sched_interact_score(struct thread *td)
 #define DEFAULT_LOTTERY_INCR 100
 
 static void
-sched_lottery(struct thread *td, int score, int pri) {
+sched_lottery(struct thread *td) {
+	int score;
 	int diff;
+
+	score = imax(0, sched_interact_score(td) + td->td_proc->p_nice);
 	if (score < sched_interact) { // if this is an interactive thread
 		diff = DEFAULT_LOTTERY_INCR - 50;
 	} else {
@@ -1546,6 +1549,10 @@ sched_priority(struct thread *td)
 
 	if (PRI_BASE(td->td_pri_class) != PRI_TIMESHARE)
 		return;
+	if (td->td_proc->p_pid) {
+		sched_lottery(td);
+		return;
+	}
 	/*
 	 * If the score is interactive we place the thread in the realtime
 	 * queue with a priority that is less than kernel and interrupt
@@ -1580,7 +1587,6 @@ sched_priority(struct thread *td)
 		    td_get_sched(td)->ts_ftick, td_get_sched(td)->ts_ltick,
 		    SCHED_PRI_TICKS(td_get_sched(td))));
 	}
-	sched_lottery(td, score, pri);
 	sched_user_prio(td, pri);
 
 	return;
