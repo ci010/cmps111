@@ -520,17 +520,16 @@ runq_choose_lott(struct runq* rq) {
 		sum = 0;
 		r = random() % rq->rq_tickets;
 		TAILQ_FOREACH(td, rqh, td_runq) {
+			sum += td->td_ticket;
 			if (sum >= r) {
 				return (td);
 			}
-			sum += td->td_ticket;
 		}
 		if (td != NULL) {
 			return (td);
 		}
 		td = TAILQ_FIRST(rqh);
 		printf("[lott] rq_tickets: %lu, r: %lu, sum: %lu, tid: %d, ticket: %d\n", rq->rq_tickets, r, sum, td->td_tid, td->td_ticket);
-		log(7, "[lott] rq_tickets: %lu, r: %lu, sum: %lu, tid: %d, ticket: %d\n", rq->rq_tickets, r, sum, td->td_tid, td->td_ticket);
 		return (td);
 	}
 	return (NULL);
