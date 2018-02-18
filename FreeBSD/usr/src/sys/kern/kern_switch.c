@@ -261,13 +261,10 @@ runq_rnd_update(struct runq *rq) {
 static u_long
 runq_rnd(struct runq *rq) {
 	int idx;
+	
 	rq->rq_rnd_dirty = 1;
-	if (rq->rq_rnd_piov >= 128) {
-		rq->rq_rnd_piov = 0;
-	}
 	idx = rq->rq_rnd_piov % 256;
-	rq->rq_rnd_piov++;
-	log(7, "[lottery] value: %lu\n", rq->rq_rnd_pool[idx]);
+	rq->rq_rnd_piov = idx + 1;
 	return rq->rq_rnd_pool[idx];
 }
 
