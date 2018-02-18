@@ -513,13 +513,14 @@ runq_choose_lott(struct runq* rq) {
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
 		r = random() % rq->rq_tickets;
-		TAILQ_FOREACH(td, rqh, td_runq) {
-			if (sum >= r) {
-				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-				return (td);
-			}
-			sum += td->td_ticket;
-		}
+		// TAILQ_FOREACH(td, rqh, td_runq) {
+		// 	if (sum >= r) {
+		// 		KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
+		// 		return (td);
+		// 	}
+		// 	sum += td->td_ticket;
+		// }
+		return TAILQ_FIRST(rqh);
 	}
 	return (NULL);
 }
