@@ -1339,6 +1339,18 @@ tdq_choose(struct tdq *tdq)
 		return (td);
 	}
 
+	td = runq_choose_lott(&tdq->tdq_realtime);
+	if (td != NULL)
+		return (td);
+	td = runq_choose_lott(&tdq->tdq_timeshare);
+	if (td != NULL) {
+		return (td);
+	}
+	td = runq_choose_lott(&tdq->tdq_idle);
+	if (td != NULL) {
+		return (td);
+	}
+
 	return (NULL);
 }
 

@@ -501,6 +501,29 @@ runq_choose_fuzz(struct runq *rq, int fuzz)
 	return (NULL);
 }
 
+struct thread *
+runq_choose_lott(struct runq*) {
+	struct rqhead *rqh;
+	struct thread *td;
+	u_long sum;
+	u_long r;
+
+	rqh = &rq->rq_usr;
+	
+	if (!TAILQ_EMPTY(rqh)) {
+		sum = 0;
+		r = random() % rq->rq_tickets;
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			if (sum >= r) {
+				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
+				return (td);
+			}
+			sum += td->td_ticket;
+		}
+	}
+	return (NULL);
+}
+
 /*
  * Find the highest priority process on the run queue.
  */
@@ -521,22 +544,22 @@ runq_choose(struct runq *rq)
 	}
 	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
 
-	rqh = &rq->rq_usr;
-	u_long sum;
-	u_long r;
-	if (!TAILQ_EMPTY(rqh)) {
-		sum = 0;
-		r = random() % rq->rq_tickets;
+	// rqh = &rq->rq_usr;
+	// u_long sum;
+	// u_long r;
+	// if (!TAILQ_EMPTY(rqh)) {
+	// 	sum = 0;
+	// 	r = random() % rq->rq_tickets;
 		
-		TAILQ_FOREACH(td, rqh, td_runq) {
-			if (sum >= r) {
-				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-				return (td);
-			}
-			sum += td->td_ticket;
-		}
-		return (NULL);
-	}
+	// 	TAILQ_FOREACH(td, rqh, td_runq) {
+	// 		if (sum >= r) {
+	// 			KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
+	// 			return (td);
+	// 		}
+	// 		sum += td->td_ticket;
+	// 	}
+	// 	return (NULL);
+	// }
 
 	return (NULL);
 }
@@ -558,22 +581,6 @@ runq_choose_from(struct runq *rq, u_char idx)
 		return (td);
 	}
 	CTR1(KTR_RUNQ, "runq_choose_from: idlethread pri=%d", pri);
-
-	rqh = &rq->rq_usr;
-	u_long sum;
-	u_long r;
-	if (!TAILQ_EMPTY(rqh)) {
-		sum = 0;
-		r = random() % rq->rq_tickets;
-		TAILQ_FOREACH(td, rqh, td_runq) {
-			if (sum >= r) {
-				KASSERT(td != NULL, ("runq_choose: no thread on lottory queue"));
-				return (td);
-			}
-			sum += td->td_ticket;
-		}
-		return (NULL);
-	}
 
 	return (NULL);
 }
