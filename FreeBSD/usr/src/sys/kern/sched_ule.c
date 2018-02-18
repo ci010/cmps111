@@ -2023,6 +2023,8 @@ sched_lottery(struct thread *td) {
 	int score;
 	int diff;
 	struct tdq *tdq;
+	struct td_sched *ts;
+
 
 	score = imax(0, sched_interact_score(td) + td->td_proc->p_nice);
 	if (score < sched_interact) { // if this is an interactive thread
@@ -2033,7 +2035,8 @@ sched_lottery(struct thread *td) {
 	td->td_ticket = imax(1, imin(td->td_ticket + diff, MAX_LOTTERY_TICKET));
     if (TD_ON_RUNQ(td)) {
 		tdq = TDQ_CPU(td_get_sched(td)->ts_cpu);
-		tdq->runq->rq_tickets += diff;
+		ts = td_get_sched(td);
+		tdq->ts_runq->rq_tickets += diff;
     }
     // log(7, "[Lottery][%d] Score: %d, Diff: %d, Ticket: %d\n", td->td_tid, score, diff, td->td_ticket);
 }
