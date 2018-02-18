@@ -518,7 +518,7 @@ runq_choose_lott(struct runq* rq) {
 	
 	if (!TAILQ_EMPTY(rqh)) {
 		sum = 0;
-		r = runq_rnd() % rq->rq_tickets;
+		r = runq_rnd(rq) % rq->rq_tickets;
 		TAILQ_FOREACH(td, rqh, td_runq) {
 			sum += td->td_ticket;
 			if (sum >= r) {
