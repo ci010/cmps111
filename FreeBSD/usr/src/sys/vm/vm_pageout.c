@@ -1280,9 +1280,6 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int act_delta, addl_page_shortage, deficit, inactq_shortage, maxscan;
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
-
-	printf("START TO PAGEOUT SCAN\n");
-	log(7, "START TO PAGEOUT SCAN\n");
 	
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
@@ -1340,10 +1337,6 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		KASSERT(queue_locked, ("unlocked inactive queue"));
 		KASSERT(vm_page_inactive(m), ("Inactive queue %p", m));
 
-		printf("Start debuging\n");
-		printf("%d\n", (int) m->phys_addr);
-		printf("%d\n", vm_is_even(m->phys_addr));
-		printf("End debuging\n");
 
 		PCPU_INC(cnt.v_pdpages);
 		next = TAILQ_NEXT(m, plinks.q);
@@ -1594,6 +1587,10 @@ drop_page:
 			continue;
 		}
 
+		printf("Start debuging (Scan active q)\n");
+		printf("%d\n", (int) m->phys_addr);
+		printf("%d\n", vm_is_even(m->phys_addr));
+		printf("End debuging\n");
 		/*
 		 * The count for page daemon pages is updated after checking
 		 * the page for eligibility.
