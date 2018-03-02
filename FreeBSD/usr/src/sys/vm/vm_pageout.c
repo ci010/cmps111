@@ -1258,7 +1258,7 @@ dolaundry:
 
 static bool
 vm_is_even(vm_paddr_t addr) {
-	return ((int) addr) % 2 == 0; 
+	return (((int) addr) >> 1) & 1; 
 }
 
 /*
