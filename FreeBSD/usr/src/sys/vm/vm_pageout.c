@@ -1254,6 +1254,11 @@ dolaundry:
 	}
 }
 
+static bool
+vm_is_even(vm_paddr_t addr) {
+	return ((int) addr) % 2 == 0; 
+}
+
 /*
  *	vm_pageout_scan does the dirty work for the pageout daemon.
  *
@@ -1274,10 +1279,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
 
-	printf("Start debuging\n");
-	printf("%d\n", (int) m->phys_addr);
-	printf("%d\n", vm_is_even(m->phys_addr));
-	printf("End debuging\n");
+	
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
 	 * some.  We rate limit to avoid thrashing.
@@ -1334,6 +1336,11 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		KASSERT(queue_locked, ("unlocked inactive queue"));
 		KASSERT(vm_page_inactive(m), ("Inactive queue %p", m));
 
+		printf("Start debuging\n");
+		printf("%d\n", (int) m->phys_addr);
+		printf("%d\n", vm_is_even(m->phys_addr));
+		printf("End debuging\n");
+		
 		PCPU_INC(cnt.v_pdpages);
 		next = TAILQ_NEXT(m, plinks.q);
 
