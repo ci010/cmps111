@@ -112,6 +112,8 @@ __FBSDID("$FreeBSD: releng/11.1/sys/vm/vm_pageout.c 320693 2017-07-05 19:24:53Z 
 #include <vm/vm_extern.h>
 #include <vm/uma.h>
 
+#include <sys/types.h>
+
 /*
  * System initialization
  */
@@ -1279,6 +1281,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
 
+	printf("START TO PAGEOUT SCAN\n");
+	log(7, "START TO PAGEOUT SCAN\n");
 	
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
@@ -1340,7 +1344,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		printf("%d\n", (int) m->phys_addr);
 		printf("%d\n", vm_is_even(m->phys_addr));
 		printf("End debuging\n");
-		
+
 		PCPU_INC(cnt.v_pdpages);
 		next = TAILQ_NEXT(m, plinks.q);
 
