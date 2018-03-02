@@ -1274,6 +1274,10 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
 
+	printf("Start debuging\n");
+	printf("%d\n", (int) m->phys_addr);
+	printf("%d\n", vm_is_even(m->phys_addr));
+	printf("End debuging\n");
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
 	 * some.  We rate limit to avoid thrashing.
