@@ -1088,7 +1088,7 @@ static bool
 vm_phys_is_even(vm_page_t m) {
 	vm_paddr_t pa;
 	pa = VM_PAGE_TO_PHYS(m);
-	return atop(pa) & 0;
+	return atop(pa) & 1;
 }
 
 int _ev = 0;
@@ -1137,9 +1137,9 @@ vm_phys_free_pages(vm_page_t m, int order)
 	}
 
 	if (vm_phys_is_even(m)) {
-		_ev++;
-	} else {
 		_od++;
+	} else {
+		_ev++;
 	}
 	printf("EV/OD: %d / %d\n", _ev, _od);
 
