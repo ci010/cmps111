@@ -1087,13 +1087,12 @@ vm_phys_paddr_to_segind(vm_paddr_t pa)
 static bool
 vm_phys_is_even(vm_page_t m) {
 	vm_paddr_t pa;
-	struct vm_phys_seg *seg;
-	
 	pa = VM_PAGE_TO_PHYS(m);
-	seg = &vm_phys_segs[m->segind];
-
-	return atop(pa - seg->start) & 0;
+	return atop(pa) & 0;
 }
+
+int _ev = 0;
+int _od = 0;
 
 /*
  * Free a contiguous, power of two-sized set of physical pages.
@@ -1136,11 +1135,13 @@ vm_phys_free_pages(vm_page_t m, int order)
 			m = &seg->first_page[atop(pa - seg->start)];
 		} while (order < VM_NFREEORDER - 1);
 	}
-	
-	printf("Start debuging\n");
-	printf("%d\n", (int) m->phys_addr);
-	printf("%d\n", vm_phys_is_even(m));
-	printf("End debuging\n");
+
+	if (vm_phys_is_even(m)) {
+		_ev++;
+	} else {
+		_od++;
+	}
+	printf("EV/OD: %d / %d\n", _ev, _od);
 
 	fl = (*seg->free_queues)[m->pool];
 	vm_freelist_add(fl, m, order, 1);
