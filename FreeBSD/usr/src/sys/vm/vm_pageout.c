@@ -1257,7 +1257,8 @@ dolaundry:
 }
 
 static bool
-vm_is_even(vm_paddr_t addr) {
+vm_is_even(vm_page_t m) {
+	u_int64_t addr = (u_int64_t) m->phys_addr;
 	return (((int) addr) >> 1) & 1; 
 }
 
@@ -1629,9 +1630,11 @@ drop_page:
 			m->act_count += ACT_ADVANCE + act_delta;
 			if (m->act_count > ACT_MAX)
 				m->act_count = ACT_MAX;
-		} else
-			m->act_count -= min(m->act_count, ACT_DECLINE);
-
+		} else{
+			// m->act_count -= min(m->act_count, ACT_DECLINE);
+			// Instead of subtracting from the activity count, you will divide it by two
+			m->act_count /= 2;
+		}
 		/*
 		 * Move this page to the tail of the active, inactive or laundry
 		 * queue depending on usage.
