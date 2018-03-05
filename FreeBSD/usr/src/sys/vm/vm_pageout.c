@@ -1256,11 +1256,6 @@ dolaundry:
 	}
 }
 
-static bool
-vm_is_even(vm_page_t m) {
-	u_int64_t addr = (u_int64_t) m->phys_addr;
-	return (((int) addr) >> 1) & 1; 
-}
 
 /*
  *	vm_pageout_scan does the dirty work for the pageout daemon.
@@ -1587,11 +1582,7 @@ drop_page:
 			vm_page_unlock(m);
 			continue;
 		}
-
-		printf("Start debuging (Scan active q)\n");
-		printf("%d\n", (int) m->phys_addr);
-		printf("%d\n", vm_is_even(m->phys_addr));
-		printf("End debuging\n");
+		
 		/*
 		 * The count for page daemon pages is updated after checking
 		 * the page for eligibility.
