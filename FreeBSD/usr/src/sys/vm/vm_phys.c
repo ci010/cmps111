@@ -1085,7 +1085,7 @@ vm_phys_paddr_to_segind(vm_paddr_t pa)
 }
 
 static bool
-vm_phys_is_even(vm_page_t m) {
+vm_phys_is_odd(vm_page_t m) {
 	vm_paddr_t pa;
 	pa = VM_PAGE_TO_PHYS(m);
 	return atop(pa) & 1;
@@ -1136,12 +1136,12 @@ vm_phys_free_pages(vm_page_t m, int order)
 		} while (order < VM_NFREEORDER - 1);
 	}
 
-	if (vm_phys_is_even(m)) {
+	if (vm_phys_is_odd(m)) {
 		_od++;
 	} else {
 		_ev++;
 	}
-	printf("EV/OD: %d / %d\n", _ev, _od);
+	// printf("EV/OD: %d / %d\n", _ev, _od);
 
 	fl = (*seg->free_queues)[m->pool];
 	vm_freelist_add(fl, m, order, 1);
