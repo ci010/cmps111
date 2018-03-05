@@ -887,7 +887,7 @@ unlock_mp:
  * Returns the number of pages successfully laundered.
  */
 static int
-vm_paggeout_launder(struct vm_domain *vmd, int launder, bool in_shortfall)
+vm_pageout_launder(struct vm_domain *vmd, int launder, bool in_shortfall)
 {
 	struct vm_pagequeue *pq;
 	vm_object_t object;
