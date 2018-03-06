@@ -1141,7 +1141,7 @@ vm_phys_free_pages(vm_page_t m, int order)
 	} else {
 		_ev++;
 	}
-	// printf("EV/OD: %d / %d\n", _ev, _od);
+	printf("EV/OD: %d / %d\n", _ev, _od);
 
 	fl = (*seg->free_queues)[m->pool];
 	vm_freelist_add(fl, m, order, 1);

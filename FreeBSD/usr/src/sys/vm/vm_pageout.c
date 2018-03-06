@@ -1283,7 +1283,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
 	
-	printf("%d %d %d %d\n", vm_page_scan, vm_active_inactive, vm_inactive_active, vm_queue_flush);
+	// printf("%d %d %d %d\n", vm_page_scan, vm_active_inactive, vm_inactive_active, vm_queue_flush);
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
 	 * some.  We rate limit to avoid thrashing.
