@@ -28,6 +28,6 @@ The folder `graph` contains the line graphs that are plotted by the files in `co
 
 The python script file `dump.py` dump the log to csv.
 
-The csv format can be directly open by darwin's application, Number. Maybe it's also can be imported to Excel, but I didn't try it.
+The csv format can be directly open by darwin's application, Number, which can plot graph easily. Maybe it's also can be imported to Excel, but I didn't try it.
 
 
