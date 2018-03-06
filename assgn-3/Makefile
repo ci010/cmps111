@@ -4,3 +4,4 @@ mem : hammer.c
 test :
 	chmod +x mem
 	./mem
+	
