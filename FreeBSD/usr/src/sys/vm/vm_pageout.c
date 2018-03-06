@@ -112,6 +112,20 @@ __FBSDID("$FreeBSD: releng/11.1/sys/vm/vm_pageout.c 320693 2017-07-05 19:24:53Z 
 #include <vm/vm_extern.h>
 #include <vm/uma.h>
 
+#include <sys/types.h>
+
+int vm_page_scan = 0;
+
+int vm_active_inactive = 0;
+int vm_active_laund = 0;
+
+int vm_inactive_active = 0;
+int vm_inactive_laund = 0;
+int vm_inactive_free = 0;
+
+int vm_laund_free = 0;
+int vm_laund_active = 0;
+
 /*
  * System initialization
  */
@@ -969,6 +983,7 @@ vm_pageout_launder(struct vm_domain *vmd, int launder, bool in_shortfall)
 		if (act_delta != 0) {
 			if (object->ref_count != 0) {
 				PCPU_INC(cnt.v_reactivated);
+				vm_laund_active++;
 				vm_page_activate(m);
 
 				/*
@@ -1016,6 +1031,7 @@ vm_pageout_launder(struct vm_domain *vmd, int launder, bool in_shortfall)
 		 */
 		if (m->dirty == 0) {
 free_page:
+			vm_laund_free++;
 			vm_page_free(m);
 			PCPU_INC(cnt.v_dfree);
 		} else if ((object->flags & OBJ_DEAD) == 0) {
@@ -1254,6 +1270,8 @@ dolaundry:
 	}
 }
 
+
+
 /*
  *	vm_pageout_scan does the dirty work for the pageout daemon.
  *
@@ -1273,7 +1291,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int act_delta, addl_page_shortage, deficit, inactq_shortage, maxscan;
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
-
+	
+	printf("%d | %d %d | %d %d %d | %d %d\n", vm_page_scan, vm_active_inactive, vm_active_laund, vm_inactive_active, vm_inactive_free, vm_inactive_laund, vm_laund_active, vm_laund_free);
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
 	 * some.  We rate limit to avoid thrashing.
@@ -1326,6 +1345,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	for (m = TAILQ_FIRST(&pq->pq_pl);
 	     m != NULL && maxscan-- > 0 && page_shortage > 0;
 	     m = next) {
+		
 		vm_pagequeue_assert_locked(pq);
 		KASSERT(queue_locked, ("unlocked inactive queue"));
 		KASSERT(vm_page_inactive(m), ("Inactive queue %p", m));
@@ -1333,11 +1353,17 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		PCPU_INC(cnt.v_pdpages);
 		next = TAILQ_NEXT(m, plinks.q);
 
+		
 		/*
 		 * skip marker pages
 		 */
 		if (m->flags & PG_MARKER)
 			continue;
+
+		/*
+		* scan the page
+		*/
+		vm_page_scan++;
 
 		KASSERT((m->flags & PG_FICTITIOUS) == 0,
 		    ("Fictitious page %p cannot be in inactive queue", m));
@@ -1407,7 +1433,7 @@ unlock_page:
 		 * Invalid pages can be easily freed. They cannot be
 		 * mapped, vm_page_free() asserts this.
 		 */
-		if (m->valid == 0)
+		if (m->valid == 0) 
 			goto free_page;
 
 		/*
@@ -1429,6 +1455,8 @@ unlock_page:
 		if (act_delta != 0) {
 			if (object->ref_count != 0) {
 				PCPU_INC(cnt.v_reactivated);
+
+				vm_inactive_active++;
 				vm_page_activate(m);
 
 				/*
@@ -1472,11 +1500,14 @@ unlock_page:
 		 */
 		if (m->dirty == 0) {
 free_page:
+			vm_inactive_free++;
 			vm_page_free(m);
 			PCPU_INC(cnt.v_dfree);
 			--page_shortage;
-		} else if ((object->flags & OBJ_DEAD) == 0)
+		} else if ((object->flags & OBJ_DEAD) == 0) {
+			vm_inactive_laund++;
 			vm_page_launder(m);
+		}
 drop_page:
 		vm_page_unlock(m);
 		VM_OBJECT_WUNLOCK(object);
@@ -1580,6 +1611,11 @@ drop_page:
 		}
 
 		/*
+		* scan the page
+		*/
+		vm_page_scan++;
+		
+		/*
 		 * The count for page daemon pages is updated after checking
 		 * the page for eligibility.
 		 */
@@ -1619,7 +1655,7 @@ drop_page:
 				m->act_count = ACT_MAX;
 		} else
 			m->act_count -= min(m->act_count, ACT_DECLINE);
-
+		
 		/*
 		 * Move this page to the tail of the active, inactive or laundry
 		 * queue depending on usage.
@@ -1637,9 +1673,10 @@ drop_page:
 			 * is necessarily small, so we may move dirty pages
 			 * directly to the laundry queue.
 			 */
-			if (inactq_shortage <= 0)
+			if (inactq_shortage <= 0) {
+				vm_active_inactive++;
 				vm_page_deactivate(m);
-			else {
+			} else {
 				/*
 				 * Calling vm_page_test_dirty() here would
 				 * require acquisition of the object's write
@@ -1651,10 +1688,12 @@ drop_page:
 				 * dirty field by the pmap.
 				 */
 				if (m->dirty == 0) {
+					vm_active_inactive++;
 					vm_page_deactivate(m);
 					inactq_shortage -=
 					    act_scan_laundry_weight;
 				} else {
+					vm_active_laund++;
 					vm_page_launder(m);
 					inactq_shortage--;
 				}
