@@ -115,9 +115,16 @@ __FBSDID("$FreeBSD: releng/11.1/sys/vm/vm_pageout.c 320693 2017-07-05 19:24:53Z 
 #include <sys/types.h>
 
 int vm_page_scan = 0;
+
 int vm_active_inactive = 0;
+int vm_active_laund = 0;
+
 int vm_inactive_active = 0;
-int vm_queue_flush = 0;
+int vm_inactive_laund = 0;
+int vm_inactive_free = 0;
+
+int vm_laund_free = 0;
+int vm_laund_active = 0;
 
 /*
  * System initialization
@@ -976,6 +983,7 @@ vm_pageout_launder(struct vm_domain *vmd, int launder, bool in_shortfall)
 		if (act_delta != 0) {
 			if (object->ref_count != 0) {
 				PCPU_INC(cnt.v_reactivated);
+				vm_laund_active++;
 				vm_page_activate(m);
 
 				/*
@@ -1023,6 +1031,7 @@ vm_pageout_launder(struct vm_domain *vmd, int launder, bool in_shortfall)
 		 */
 		if (m->dirty == 0) {
 free_page:
+			vm_laund_free++;
 			vm_page_free(m);
 			PCPU_INC(cnt.v_dfree);
 		} else if ((object->flags & OBJ_DEAD) == 0) {
@@ -1283,7 +1292,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
 	
-	// printf("%d %d %d %d\n", vm_page_scan, vm_active_inactive, vm_inactive_active, vm_queue_flush);
+	printf("%d | %d %d | %d %d %d | %d %d\n", vm_page_scan, vm_active_inactive, vm_active_laund, vm_inactive_active, vm_inactive_free, vm_inactive_laund, vm_laund_active, vm_laund_free);
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
 	 * some.  We rate limit to avoid thrashing.
@@ -1424,7 +1433,7 @@ unlock_page:
 		 * Invalid pages can be easily freed. They cannot be
 		 * mapped, vm_page_free() asserts this.
 		 */
-		if (m->valid == 0)
+		if (m->valid == 0) 
 			goto free_page;
 
 		/*
@@ -1491,11 +1500,12 @@ unlock_page:
 		 */
 		if (m->dirty == 0) {
 free_page:
+			vm_inactive_free++;
 			vm_page_free(m);
 			PCPU_INC(cnt.v_dfree);
 			--page_shortage;
 		} else if ((object->flags & OBJ_DEAD) == 0) {
-			vm_queue_flush++;
+			vm_inactive_laund++;
 			vm_page_launder(m);
 		}
 drop_page:
@@ -1685,7 +1695,7 @@ drop_page:
 					inactq_shortage -=
 					    act_scan_laundry_weight;
 				} else {
-					vm_queue_flush++;
+					vm_active_laund++;
 					vm_page_launder(m);
 					inactq_shortage--;
 				}

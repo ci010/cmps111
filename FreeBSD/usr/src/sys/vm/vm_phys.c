@@ -1084,15 +1084,16 @@ vm_phys_paddr_to_segind(vm_paddr_t pa)
 	    (uintmax_t)pa);
 }
 
-static bool
-vm_phys_is_odd(vm_page_t m) {
-	// vm_paddr_t pa;
-	// pa = VM_PAGE_TO_PHYS(m);
-	return atop(m) & 1;
+static void
+vm_freelist_add_even_odd(struct vm_freelist *fl, vm_page_t m, int order)
+{
+	m->order = order;
+	if (atop(m) & 1) // if it's odd, goes tail
+		TAILQ_INSERT_TAIL(&fl[order].pl, m, plinks.q);
+	else // if it's even, goes head
+		TAILQ_INSERT_HEAD(&fl[order].pl, m, plinks.q);
+	fl[order].lcnt++;
 }
-
-int _ev = 0;
-int _od = 0;
 
 /*
  * Free a contiguous, power of two-sized set of physical pages.
@@ -1136,15 +1137,15 @@ vm_phys_free_pages(vm_page_t m, int order)
 		} while (order < VM_NFREEORDER - 1);
 	}
 
-	if (vm_phys_is_odd(m)) {
-		_od++;
-	} else {
-		_ev++;
-	}
-	printf("EV/OD: %d / %d\n", _ev, _od);
-
 	fl = (*seg->free_queues)[m->pool];
-	vm_freelist_add(fl, m, order, 1);
+
+	/* 
+	 * change it into even/odd algorithm
+	 * since directly modifying the original vm_freelist_add function might hurts other cases (unfree page and split page)
+	 * we create a new function for only the case for 
+	 * inactive/invalid page transition
+	 */ 
+	vm_freelist_add_even_odd(fl, m, order);
 }
 
 /*
