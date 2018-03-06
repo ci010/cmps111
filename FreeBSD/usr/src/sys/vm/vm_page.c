@@ -2679,10 +2679,34 @@ vm_page_requeue_locked(vm_page_t m)
 	pq = vm_page_pagequeue(m);
 	vm_pagequeue_assert_locked(pq);
 	TAILQ_REMOVE(&pq->pq_pl, m, plinks.q);
-	// TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
-	//  move it to the front of the active list instead of to the rear. 
-	// TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
+	TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
+}
+
+/*
+ *	vm_page_enqueue:
+ *
+ *	Add the given page to the specified page queue.
+ *
+ *	The page must be locked.
+ */
+static void
+vm_page_enqueue_head(uint8_t queue, vm_page_t m)
+{
+	struct vm_pagequeue *pq;
+
+	vm_page_lock_assert(m, MA_OWNED);
+	KASSERT(queue < PQ_COUNT,
+	    ("vm_page_enqueue: invalid queue %u request for page %p",
+	    queue, m));
+	if (queue == PQ_LAUNDRY)
+		pq = &vm_dom[0].vmd_pagequeues[queue];
+	else
+		pq = &vm_phys_domain(m)->vmd_pagequeues[queue];
+	vm_pagequeue_lock(pq);
+	m->queue = queue;
 	TAILQ_INSERT_HEAD(&pq->pq_pl, m, plinks.q);
+	vm_pagequeue_cnt_inc(pq);
+	vm_pagequeue_unlock(pq);
 }
 
 /*
@@ -2706,7 +2730,7 @@ vm_page_activate(vm_page_t m)
 				m->act_count = ACT_INIT;
 			if (queue != PQ_NONE)
 				vm_page_dequeue(m);
-			vm_page_enqueue(PQ_ACTIVE, m);
+			vm_page_enqueue_head(PQ_ACTIVE, m);
 		} else
 			KASSERT(queue == PQ_NONE,
 			    ("vm_page_activate: wired page %p is queued", m));
@@ -2950,8 +2974,10 @@ _vm_page_deactivate(vm_page_t m, boolean_t noreuse)
 		if (noreuse)
 			TAILQ_INSERT_BEFORE(&vm_phys_domain(m)->vmd_inacthead,
 			    m, plinks.q);
-		else
-			TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
+		else {
+			// TAILQ_INSERT_TAIL(&pq->pq_pl, m, plinks.q);
+			TAILQ_INSERT_HEAD(&pq->pq_pl, m, plinks.q);
+		}
 		vm_pagequeue_cnt_inc(pq);
 		vm_pagequeue_unlock(pq);
 	}

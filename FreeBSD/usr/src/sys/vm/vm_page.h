@@ -585,9 +585,11 @@ vm_page_aflag_clear(vm_page_t m, uint8_t bits)
 	/*
 	 * cancel this clear by chance
 	 */
-	rnd = random();
-	if (rnd % 100 < 35)
-		return;
+	if (bits == PGA_REFERENCED) {
+		rnd = random();
+		if (rnd % 100 < 35)
+			return;
+	}
 
 	/*
 	 * The PGA_REFERENCED flag can only be cleared if the page is locked.
@@ -622,9 +624,11 @@ vm_page_aflag_set(vm_page_t m, uint8_t bits)
 	/*
 	 * cancel this clear by chance
 	 */
-	rnd = random();
-	if (rnd % 100 < 35)
-		return;
+	if (bits == PGA_REFERENCED) {
+		rnd = random();
+		if (rnd % 100 < 35)
+			return;
+	}	
 
 	VM_PAGE_ASSERT_PGA_WRITEABLE(m, bits);
 
