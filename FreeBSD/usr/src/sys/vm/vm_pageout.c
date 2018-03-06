@@ -1292,7 +1292,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	int page_shortage, scan_tick, scanned, starting_page_shortage;
 	boolean_t queue_locked;
 	
-	log(7, "%d | %d %d | %d %d %d | %d %d\n", vm_page_scan, vm_active_inactive, vm_active_laund, vm_inactive_active, vm_inactive_free, vm_inactive_laund, vm_laund_active, vm_laund_free);
+	vm_page_scan = vm_active_inactive = vm_active_laund = vm_inactive_active = vm_inactive_free = vm_inactive_laund = vm_laund_active = vm_laund_free = 0;
 	/*
 	 * If we need to reclaim memory ask kernel caches to return
 	 * some.  We rate limit to avoid thrashing.
@@ -1717,6 +1717,9 @@ drop_page:
 		}
 	}
 #endif
+
+	log(7, "%d | %d %d | %d %d %d | %d %d\n", vm_page_scan, vm_active_inactive, vm_active_laund, vm_inactive_active, vm_inactive_free, vm_inactive_laund, vm_laund_active, vm_laund_free);
+
 	return (page_shortage <= 0);
 }
 
