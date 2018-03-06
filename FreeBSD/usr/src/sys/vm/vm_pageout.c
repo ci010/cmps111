@@ -1447,7 +1447,7 @@ unlock_page:
 			if (object->ref_count != 0) {
 				PCPU_INC(cnt.v_reactivated);
 
-				vm_active_inactive++;
+				vm_inactive_active++;
 				vm_page_activate(m);
 
 				/*
