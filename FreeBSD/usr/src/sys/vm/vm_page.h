@@ -68,6 +68,7 @@
 #define	_VM_PAGE_
 
 #include <vm/pmap.h>
+#include <sys/libkern.h>
 
 /*
  *	Management of resident (logical) pages.
@@ -579,6 +580,14 @@ static inline void
 vm_page_aflag_clear(vm_page_t m, uint8_t bits)
 {
 	uint32_t *addr, val;
+	u_long rnd;
+
+	/*
+	 * cancel this clear by chance
+	 */
+	rnd = random();
+	if (rnd % 100 < 35)
+		return;
 
 	/*
 	 * The PGA_REFERENCED flag can only be cleared if the page is locked.
@@ -608,6 +617,14 @@ static inline void
 vm_page_aflag_set(vm_page_t m, uint8_t bits)
 {
 	uint32_t *addr, val;
+	u_long rnd;
+
+	/*
+	 * cancel this clear by chance
+	 */
+	rnd = random();
+	if (rnd % 100 < 35)
+		return;
 
 	VM_PAGE_ASSERT_PGA_WRITEABLE(m, bits);
 
