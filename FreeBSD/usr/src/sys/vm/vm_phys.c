@@ -1086,9 +1086,9 @@ vm_phys_paddr_to_segind(vm_paddr_t pa)
 
 static bool
 vm_phys_is_odd(vm_page_t m) {
-	vm_paddr_t pa;
-	pa = VM_PAGE_TO_PHYS(m);
-	return atop(pa) & 1;
+	// vm_paddr_t pa;
+	// pa = VM_PAGE_TO_PHYS(m);
+	return atop(m) & 1;
 }
 
 int _ev = 0;
