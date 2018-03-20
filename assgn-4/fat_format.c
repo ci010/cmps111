@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
+
 
 #define FAT_BLOCK_SIZE 4096
 
