@@ -521,7 +521,7 @@ void fat_init(int fd) {
     assert(strcmp(root_block_e[1].fat_entry_name, "..") == 0);
     
     lseek(fd, 0, SEEK_SET);
-    FAT = mmap(NULL, fat_super.fat_super_fat_blocks * 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 4096);
+    FAT = mmap(NULL, fat_super.fat_super_fat_blocks * 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 4096);
 
     assert(FAT != MAP_FAILED);
     assert(FAT[0] == -1);
