@@ -64,3 +64,9 @@ The program use `struct fat_entry` as `fat_entry_t` to represent the dir entry.
 | fat_entry_read   | (entry: fat_entry_t *, buf: char*, size: size_t, off: off_t): int | read the content from entry to the buffer                                                                                                                     |
 | fat_entry_delete | (entry: fat_entry_t *): bool                                      | clear the content of entry out and delete an entry                                                                                                            |
 | fat_entry_rename | (block_num: int): int                                             | rename or move the entry to the other path                                                                                                                    |
+
+
+## Fuse
+
+The program hook fuse in fat_fuse.c. The operations in it are basically, call the entry level functions
+
