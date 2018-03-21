@@ -24,9 +24,37 @@
 | 4096 - 128                   | initially empty reserved space for root dir block                |
 | (N - 1) * 4096               | rest of data blocks                                              |
 
-## Helper functions
+## Utils
 
-| function       | type                             | usage                                      |
-| -------------- | -------------------------------- | ------------------------------------------ |
-| fat_block_read | (block_num: int, buf: int): void | seek block by 4096 * block_number and read |
-| fat_block_next | (block_num: int): int            | find the next block of this block          |
+Utilities provides basic functions to manipulate string path....
+
+| function | type                                            | usage                                                                            |
+| -------- | ----------------------------------------------- | -------------------------------------------------------------------------------- |
+| last_idx | (path: char*): int                              | just an impl of last index of / (slash) in the input                             |
+| path_par | (str: char*, parent: char*, child: char*): void | split the input str into parent and child, e.g. /a/b/c -> parent: /a/b, child: c |
+
+## Block
+
+The program handle blocks by such opertions:
+
+| function             | type                                                            | usage                                                                                      |
+| -------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| fat_block_read       | (block_num: int, buf: void*): void                              | seek and read the block                                                                    |
+| fat_block_write      | (block_num: int, buf: void*, size: size_t, offset: off_t): void | seek and write block with buffer                                                           |
+| fat_block_next       | (block_num: int): int                                           | find the next block of this block                                                          |
+| fat_block_alloc      | (): int                                                         | allocated a free block and return it                                                       |
+| fat_block_next_alloc | (block_number: int): int                                        | find the next block of this block; if current block is the last block, allocate one for it |
+
+## Entry
+
+The program use `struct fat_entry` as `fat_entry_t` to represent the dir entry.
+
+| function         | type                                                              | usage                                                                                                                                                         |
+| ---------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fat_entry_alloc  | (name: char*, entry: fat_entry_t, flags: int): off_t              | allocate a new entry to the input entry, return allocated offset of new entry in disk image                                                                   |
+| fat_entry_open   | (path: char*, dir: bool, alloc: bool): fat_entry_t *              | return the opened entry by path; the param "alloc" decides whether the entry should be allocated if it not exists; param dir decide if it's a dir to allocate |
+| fat_entry_close  | (entry: fat_entry_t *): int                                       | close the opened entry                                                                                                                                        |
+| fat_entry_write  | (entry: fat_entry_t *, buf: char*, size: size_t, off: off_t): int | write the content of buffer to the entry                                                                                                                      |
+| fat_entry_read   | (entry: fat_entry_t *, buf: char*, size: size_t, off: off_t): int | read the content from entry to the buffer                                                                                                                     |
+| fat_entry_delete | (entry: fat_entry_t *): bool                                      | clear the content of entry out and delete an entry                                                                                                            |
+| fat_entry_rename | (block_num: int): int                                             | rename or move the entry to the other path                                                                                                                    |

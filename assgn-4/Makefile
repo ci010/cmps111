@@ -1,9 +1,9 @@
 all : fat_fuse fatcli utest
 
-fat_fuse : fat_fuse.c
+fat_fuse : fat_fuse.c fat.h
 	cc fat_fuse.c -o fat_fuse `pkgconf fuse --cflags --libs`
 
-fatcli: fatcli.c
+fatcli: fatcli.c fat.h
 	cc fatcli.c -o fatcli
 
 utest : 
@@ -23,6 +23,7 @@ clean :
 	sudo umount ./fatdisk
 	rm -r ./fatdisk
 	rm fatimg
+	rm fat_fuse
 	rm *.core
 
 .PHONY : test stop all utest clean

@@ -38,42 +38,47 @@ fat_getattr(const char* path, struct stat* stbuf) {
     return res;
 }
 
+
 /**
  * the most tricky one in common syscalls.... 
  */ 
 static int
 fat_rename(const char *path, const char *target_path) {
-    fat_entry_t *src = fat_entry_open(path, 0, 0);
-    if (src == NULL) {
-        return ENOENT;
-    }
-    fat_entry_t place_holder;
-    memcpy(&place_holder, src, 64);
-    src->fat_entry_start_block = 0;
-    fat_entry_close(src);
+    // fat_entry_t *src = fat_entry_open(path, 0, 0);
+    // if (src == NULL) {
+    //     return ENOENT;
+    // }
+    // fat_entry_t place_holder;
+    // memcpy(&place_holder, src, 64);
+    // src->fat_entry_start_block = 0;
+    // fat_entry_close(src);
 
-    fat_entry_t *tar = fat_entry_open(target_path, place_holder.fat_entry_flags & 1, 1);
-    if (tar == NULL) {
-        return EISDIR;
-    }
-    if ((tar->fat_entry_flags & 1) != (place_holder.fat_entry_flags & 1)) {
-        return EISDIR; //newpath is an existing directory, but oldpath is not a directory, or reversed
-    }
-    /**
-     * handle replace or normal move here
-     * 
-     * (there might be optimization for renaming two entries in same dir... impl by just renaming... maybe i will do that if i have time...)
-     */
-    
-    time_t t = time(0);
-    tar->fat_entry_start_block = place_holder.fat_entry_start_block;
-    tar->fat_entry_file_len = place_holder.fat_entry_file_len;
-    tar->fat_entry_flags = place_holder.fat_entry_flags;
-    tar->fat_entry_ctime = place_holder.fat_entry_ctime;
-    tar->fat_entry_mtime = t;
-    fat_entry_close(tar);
-    return 0;
+    // fat_entry_t *tar = fat_entry_open(target_path, place_holder.fat_entry_flags & 1, 1);
+    // if (tar == NULL) {
+    //     return EISDIR; // this is means either the parent doesn't exist, or out of mem
+    // }
+    // if ((tar->fat_entry_flags & 1) != (place_holder.fat_entry_flags & 1)) {
+    //     return EISDIR; // from doc: newpath is an existing directory, but oldpath is not a directory, or reversed
+    // }
+    // /**
+    //  * handle replace or normal move here
+    //  * 
+    //  * (there might be the optimization for renaming two entries in same dir... impl by just renaming... maybe i will do that if i have time...)
+    //  */
+    // fat_entry_delete(target_path);
+    // time_t t = time(0);
+    // tar->fat_entry_start_block = place_holder.fat_entry_start_block;
+    // tar->fat_entry_file_len = place_holder.fat_entry_file_len;
+    // tar->fat_entry_flags = place_holder.fat_entry_flags;
+    // tar->fat_entry_ctime = place_holder.fat_entry_ctime;
+    // tar->fat_entry_mtime = t;
+    // fat_entry_close(tar);
+    return fat_entry_rename(path, target_path);
 }
+
+/**************************
+ * dir operations section
+ **************************/ 
 
 static int
 fat_rmdir(const char* path) {
@@ -131,8 +136,10 @@ fat_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 
     while (block != 0 && block != -2) {
         fat_block_read(block, (void *) sub_entries);
-        for (int i = 0; i < 64 && sub_entries[i].fat_entry_start_block != 0; ++i) {
-            filler(buf, sub_entries[i].fat_entry_name, NULL, 0);
+        for (int i = 0; i < 64; ++i) {
+            if (sub_entries[i].fat_entry_start_block != 0) {
+                filler(buf, sub_entries[i].fat_entry_name, NULL, 0);
+            }
         }
         block = fat_block_next(block);
     } 
@@ -140,6 +147,9 @@ fat_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
     return 0;
 }
 
+/**************************
+ * file operations section
+ **************************/ 
 
 static int
 fat_unlink(const char* path) {

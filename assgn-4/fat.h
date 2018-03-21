@@ -15,6 +15,9 @@
 #define FAT_ENCRT 0x0010
 #define FAT_ENDIR 0x0001
 
+/**
+ * helper func to calculate last index of / in a string
+ */ 
 int last_idx(const char* path) {
     int cur = 0;
     int last = -1;
@@ -28,6 +31,11 @@ int last_idx(const char* path) {
     return last;
 }
 
+/**
+ * helper func to split the str by / into parent and child
+ * 
+ * e.g. /a/b/c -> parent: /a/b, child: c
+ */ 
 void path_par(const char* str, char *parent, char *child) {
     char *cpy = strdup(str);
     int last = last_idx(str);
@@ -47,6 +55,9 @@ void path_par(const char* str, char *parent, char *child) {
     free(cpy);
 }
 
+/**
+ * these are all by pdf definitions
+ */ 
 struct fat_entry {
     char fat_entry_name[24];
 
@@ -77,8 +88,6 @@ typedef struct fat_entry fat_entry_t;
 
 
 int fat_dev;
-FILE *debug_dev;
-int protected_range;
 fat_superblock_t fat_super;
 /**
  * The root dir '.'
@@ -167,18 +176,14 @@ fat_block_next_alloc(int block_num) {
  * Entry manipulation section 
  ****************************/
 
-static int
-fat_dealloc_entry(const char *name, fat_entry_t *parent, int dir_flag) {
-    return 0;
-}
-
 /**
  * allocate new entry by name, the passin entry is the parent entry,
  * and it will be reset to the child entry if the allocation success.
  * 
  * flags represent if the entry is a folder
  * 
- * return the offset of this entry block
+ * return the offset of this entry block in the image
+ * return 0 if allocation failed
  */ 
 static off_t
 fat_entry_alloc(const char *name, fat_entry_t *entry, int flags) {
@@ -259,7 +264,7 @@ fat_entry_alloc(const char *name, fat_entry_t *entry, int flags) {
         entries[1].fat_entry_atime = t;
         entries[1].fat_entry_ctime = t;
         entries[1].fat_entry_mtime = t;
-        entries[1].fat_entry_start_block = block;
+        entries[1].fat_entry_start_block = entry->fat_entry_start_block;
         entries[1].fat_entry_file_len = 0;
         entries[1].fat_entry_flags = flags;
         entries[1].fat_entry_unsed = 0;
@@ -304,9 +309,13 @@ fat_entry_open(const char *path, char dir, char alloc) {
             return NULL;
         }
         block = entry.fat_entry_start_block;
+        /**
+         * iterate block "horizontally"
+         */ 
         while (block != 0) {
             fat_block_read(block, (void*)sub_entries);
-            for (i = 0; i < 64 && sub_entries[i].fat_entry_start_block != 0; ++i) {
+            for (i = 0; i < 64; ++i) {
+                if (sub_entries[i].fat_entry_start_block == 0) continue;
                 if (strcmp(token, sub_entries[i].fat_entry_name) == 0) {
                     if ((sub_entries[i].fat_entry_flags & 1)  == 0)
                         continue;
@@ -328,7 +337,8 @@ fat_entry_open(const char *path, char dir, char alloc) {
     found = 0;
     while (block != 0) {
         fat_block_read(block, (void*)sub_entries);
-        for (i = 0; i < 64 && sub_entries[i].fat_entry_start_block != 0; ++i) {
+        for (i = 0; i < 64; ++i) {
+            if (sub_entries[i].fat_entry_start_block == 0) continue;
             if (strcmp(child, sub_entries[i].fat_entry_name) == 0) {
                 entry = sub_entries[i];
                 found = 1;
@@ -343,20 +353,34 @@ fat_entry_open(const char *path, char dir, char alloc) {
     off_t offset;
     if (!found) {
         if (!alloc) return NULL;
+        /**
+         * if not found, we alloc one new
+         */ 
         offset = fat_entry_alloc(child, &entry, dir == -1 ? 0 : dir);
     } else {
         offset = block * FAT_BLOCK_SIZE + i * 64;
     }
+    /**
+     * use mem mapping to get this entry
+     * mmap really helps me that i do not need context (which block, which index) of the entry to do the deletion, modification case  
+     */
+    // printf("%s @ %ld\n", path, offset);
     fat_entry_t *e = (fat_entry_t *) mmap(NULL, 64, PROT_READ | PROT_WRITE, MAP_SHARED, fat_dev, offset);
     e->fat_entry_atime = time(0);
     return e;
 }
 
+/**
+ * close the entry is just stop map the mem
+ */ 
 static int
 fat_entry_close(fat_entry_t * entry) {
     return munmap(entry, 64);
 }
 
+/**
+ * write a entry 
+ */  
 static int
 fat_entry_write(fat_entry_t *entry, const char *buf, size_t size, off_t off) {
     int block = entry->fat_entry_start_block;
@@ -386,7 +410,24 @@ fat_entry_write(fat_entry_t *entry, const char *buf, size_t size, off_t off) {
         if (block < fat_super.fat_super_fat_blocks) {
             return -ENOENT;
         }
-
+        /**
+         * tricky algorithm....
+         * 
+         * we can the cases by "graph":
+         * 
+         *  |__________|__________|
+         *     A ^__B__|_____^
+         * 
+         * where, A is the offset initially, the read range B should terminal at the end of block, not the total length
+         * 
+         *  |__________|__________|
+         *     A ^__^
+         * 
+         * though, in the normal cases, the read's end should just the total length
+         * 
+         * therefore, start = offset initial, end = MIN(start + total len, end of block)
+         * 
+         */ 
         start = off_local; 
         end = 4096 > (total + start) ? (total + start) : 4096;
         len = end - start;
@@ -407,6 +448,9 @@ fat_entry_write(fat_entry_t *entry, const char *buf, size_t size, off_t off) {
     return size;
 }
 
+/**
+ * read the entry to buf
+ */ 
 static int
 fat_entry_read(fat_entry_t *entry, char *buf, size_t size, off_t off) {
     if (entry->fat_entry_flags & 1) {
@@ -473,25 +517,99 @@ fat_entry_read(fat_entry_t *entry, char *buf, size_t size, off_t off) {
     return readed_sz;
 }
 
+/**
+ * delete an entry, just by invalidate the flag
+ * 
+ * it doesn't handle the dir's content, i hope the person use this func should first check
+ * if the dir is empty, then remove the dir
+ */ 
 static char
 fat_entry_delete(fat_entry_t *entry) {
     int block = entry->fat_entry_start_block;
-    if (entry->fat_entry_flags) {
-        return 0;
-    } else {
-        /**
-         * if it's a file, wipe out all
-         */ 
-        while (block != 0) {
-            char empty[4096];
-            fat_block_write(block, empty, 4096, 0);
-            int oldblock = block;
-            block = fat_block_next(block);
-            FAT[oldblock] = 0;
-        }
+    char empty[4096];
+    /**
+     * wipe out all
+     */ 
+    while (block != 0) {
+        fat_block_write(block, empty, 4096, 0);
+        int oldblock = block;
+        block = fat_block_next(block);
+        FAT[oldblock] = 0;
     }
     entry->fat_entry_start_block = 0;
     return 1;
+}
+
+
+static int
+fat_entry_rename(const char* from, const char* to) {
+    if (strcmp(from, to) == 0) return 0;
+    fat_entry_t *e = fat_entry_open(from, 0, 0);
+    if (e == NULL) {
+        return -ENOENT;
+    }
+    char from_p[24], from_c[24];
+    char to_p[24], to_c[24];
+    path_par(from, from_p, from_c);
+    path_par(to, to_p, to_c);
+    
+    if (strcmp(from_p, to_p) == 0) {
+        fat_entry_t *tar = fat_entry_open(to, 0, 0);
+        if (tar != NULL) {
+            if ((tar->fat_entry_flags & 1) != (e->fat_entry_flags & 1)) {
+                fat_entry_close(e);
+                fat_entry_close(tar);
+                return EISDIR; // from doc: newpath is an existing directory, but oldpath is not a directory, or reversed
+            }
+            fat_entry_delete(tar);
+            fat_entry_close(tar);
+        }
+        strcpy(e->fat_entry_name, to_c);
+        e->fat_entry_mtime = time(0);
+        fat_entry_close(e);
+    } else {
+        fat_entry_t *tar = fat_entry_open(to, e->fat_entry_flags & 1, 1);
+        if (tar != NULL) {
+            if ((tar->fat_entry_flags & 1) != (e->fat_entry_flags & 1)) {
+                fat_entry_close(e);
+                fat_entry_close(tar);
+                return EISDIR; // from doc: newpath is an existing directory, but oldpath is not a directory, or reversed
+            }
+        }
+        /**
+         * emmm... we have to modify the origin dir .. point to correct pos
+         */ 
+        if ((e->fat_entry_flags & 1) == 1) {
+            /**
+             * it's really a... wasted way to do this...
+             */ 
+            fat_entry_t entries[64];
+            fat_block_read(tar->fat_entry_start_block, entries);
+            assert(0 == strcmp(entries[1].fat_entry_name, ".."));
+            int parent = entries[1].fat_entry_start_block;
+            fat_block_write(tar->fat_entry_start_block, entries, 4096, 0);
+
+            fat_block_read(e->fat_entry_start_block, entries);
+            assert(0 == strcmp(entries[1].fat_entry_name, ".."));
+            entries[1].fat_entry_start_block = parent;
+            fat_block_write(e->fat_entry_start_block, entries, 4096, 0);
+        }
+
+        fat_entry_delete(tar);
+        tar->fat_entry_start_block = e->fat_entry_start_block;
+        tar->fat_entry_ctime = e->fat_entry_ctime;
+        tar->fat_entry_atime = e->fat_entry_atime;
+        tar->fat_entry_mtime = time(0);
+        tar->fat_entry_file_len = e->fat_entry_file_len;
+        tar->fat_entry_flags = e->fat_entry_flags;
+
+        
+
+        e->fat_entry_start_block = 0;
+        fat_entry_close(e);
+        fat_entry_close(tar);
+    }
+    return 0;
 }
 
 /***************
@@ -521,6 +639,9 @@ void fat_init(int fd) {
     assert(strcmp(root_block_e[1].fat_entry_name, "..") == 0);
     
     lseek(fd, 0, SEEK_SET);
+    /**
+     * map the FAT
+     */ 
     FAT = mmap(NULL, fat_super.fat_super_fat_blocks * 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 4096);
 
     assert(FAT != MAP_FAILED);
