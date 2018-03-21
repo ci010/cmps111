@@ -2,24 +2,6 @@
 #include "fat_format.h"
 #include <sys/stat.h>
 
-void readdir(const char* path)
-{
-    fat_entry_t* entry = fat_entry_open(path, 0, 0);
-    fat_entry_t sub_entries[64];
-
-    int block = entry->fat_entry_start_block;
-
-    while (block != 0 && block != -2) {
-        fat_block_read(block, (void*)sub_entries);
-        for (int i = 0; i < 64; ++i) {
-            // if (sub_entries[i].fat_entry_start_block != 0)
-                // printf("[%s]\t", sub_entries[i].fat_entry_name);
-        }
-        block = fat_block_next(block);
-    }
-    printf("\n");
-    fat_entry_close(entry);
-}
 
 static int
 fat_rename(const char* path, const char* target_path)
@@ -67,7 +49,7 @@ void readdir0(const char* path)
         fat_block_read(block, (void*)sub_entries);
         for (int i = 0; i < 64; ++i) {
             if (sub_entries[i].fat_entry_start_block != 0)
-            printf("[%s]\t", sub_entries[i].fat_entry_name);
+                printf("[%s]\t", sub_entries[i].fat_entry_name);
         }
         block = fat_block_next(block);
     }
@@ -131,11 +113,14 @@ void test_h(int fd)
     
     fat_entry_close(file);
 
-    fat_entry_rename("bcd", "/folder/bc");
+    readdir0("/");
     readdir0("/folder");
+    printf("\n");
+    fat_entry_rename("bcd", "/folder/bc");
+    readdir0("/");
+    readdir0("/folder");
+    printf("\n");
     fat_entry_rename("folder/b", "/b-moved");
-    
-    // fat_rename("/file", "/bcd");
 
     readdir0("/");
     readdir0("/folder");

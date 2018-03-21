@@ -105,7 +105,9 @@ int *FAT;
  */ 
 static int
 fat_block_read(int block_num, void* buf) {
-    lseek(fat_dev, block_num * FAT_BLOCK_SIZE, SEEK_SET);
+    off_t off = FAT_BLOCK_SIZE;
+    off *= block_num;
+    lseek(fat_dev, off, SEEK_SET);
     read(fat_dev, buf, FAT_BLOCK_SIZE);
     return 0;
 }
@@ -115,8 +117,11 @@ fat_block_read(int block_num, void* buf) {
  */
 static void
 fat_block_write(int block_num, const void* buf, size_t size, off_t off) {
-    if (buf != NULL) 
-    lseek(fat_dev, block_num * FAT_BLOCK_SIZE + off, SEEK_SET);
+    // if (buf != NULL) 
+    off_t offset = FAT_BLOCK_SIZE;
+    offset *= block_num;
+    offset += off;
+    lseek(fat_dev, offset, SEEK_SET);
     write(fat_dev, buf, size);
 }
 
@@ -236,8 +241,9 @@ fat_entry_alloc(const char *name, fat_entry_t *entry, int flags) {
     entries[free_pos].fat_entry_unsed = 0;
 
     strcpy(entries[free_pos].fat_entry_name, name);
-    lseek(fat_dev, block * 4096, SEEK_SET);
-    write(fat_dev, entries, FAT_BLOCK_SIZE);
+    fat_block_write(block, entries, FAT_BLOCK_SIZE, 0);
+    // lseek(fat_dev, block * 4096, SEEK_SET);
+    // write(fat_dev, entries, FAT_BLOCK_SIZE);
 
     off_t offset = block * FAT_BLOCK_SIZE + free_pos * 64;
     // fat_entry_t * e = (fat_entry_t *) mmap(NULL, 64, PROT_READ | PROT_WRITE, MAP_PRIVATE, fat_dev, offset);
@@ -270,8 +276,9 @@ fat_entry_alloc(const char *name, fat_entry_t *entry, int flags) {
         entries[1].fat_entry_unsed = 0;
         strcpy(entries[1].fat_entry_name, "..");
 
-        lseek(fat_dev, child_start_block * 4096, SEEK_SET);
-        write(fat_dev, entries, FAT_BLOCK_SIZE);
+        fat_block_write(child_start_block, entries, FAT_BLOCK_SIZE, SEEK_SET);
+        // lseek(fat_dev, child_start_block * 4096, SEEK_SET);
+        // write(fat_dev, entries, FAT_BLOCK_SIZE);
     }
     
     return offset;
@@ -487,7 +494,7 @@ fat_entry_read(fat_entry_t *entry, char *buf, size_t size, off_t off) {
     char readed[4096];
     int start, end, len;
     
-    while (total > 0 && block != 0) {
+    while (total > 0 && block != -2) {
         /**
          * exam the range
          */ 
@@ -541,6 +548,10 @@ fat_entry_delete(fat_entry_t *entry) {
 }
 
 
+/**
+ * it not really work for from child to parent
+ * works for from parent to child
+ */ 
 static int
 fat_entry_rename(const char* from, const char* to) {
     if (strcmp(from, to) == 0) return 0;
@@ -578,6 +589,7 @@ fat_entry_rename(const char* from, const char* to) {
         }
         /**
          * emmm... we have to modify the origin dir .. point to correct pos
+         * i'm not really sure about this... i'm not sure if the mv will handle the multi files in dir  
          */ 
         if ((e->fat_entry_flags & 1) == 1) {
             /**
@@ -585,12 +597,11 @@ fat_entry_rename(const char* from, const char* to) {
              */ 
             fat_entry_t entries[64];
             fat_block_read(tar->fat_entry_start_block, entries);
-            assert(0 == strcmp(entries[1].fat_entry_name, ".."));
+            // assert(0 == strcmp(entries[1].fat_entry_name, ".."));
             int parent = entries[1].fat_entry_start_block;
-            fat_block_write(tar->fat_entry_start_block, entries, 4096, 0);
 
             fat_block_read(e->fat_entry_start_block, entries);
-            assert(0 == strcmp(entries[1].fat_entry_name, ".."));
+            // assert(0 == strcmp(entries[1].fat_entry_name, ".."));
             entries[1].fat_entry_start_block = parent;
             fat_block_write(e->fat_entry_start_block, entries, 4096, 0);
         }
@@ -603,7 +614,6 @@ fat_entry_rename(const char* from, const char* to) {
         tar->fat_entry_file_len = e->fat_entry_file_len;
         tar->fat_entry_flags = e->fat_entry_flags;
 
-        
 
         e->fat_entry_start_block = 0;
         fat_entry_close(e);

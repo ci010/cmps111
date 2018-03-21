@@ -1,6 +1,10 @@
+# FAT File System
+
+This program implements a easy version of FAT32 file system.
 
 ## FAT image strcut desgin
 
+The design of FAT image is kind of minimized:
 
 | Bytes                        | Usage                                                            |
 | ---------------------------- | ---------------------------------------------------------------- |
@@ -34,6 +38,8 @@ Utilities provides basic functions to manipulate string path....
 | path_par | (str: char*, parent: char*, child: char*): void | split the input str into parent and child, e.g. /a/b/c -> parent: /a/b, child: c |
 
 ## Block
+
+The fs uses 4KB blocks. These functions uses the blocks number to calculate block actuall offset and then use lseek.
 
 The program handle blocks by such opertions:
 
