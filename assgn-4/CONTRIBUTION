@@ -1,0 +1,9 @@
+Team members: xixiong, hoxu
+
+xixiong is responsible for block sections and utils, which include last_idx, 
+path_par, far_block_read, fat_block_write, fat_block_next, fat_alloc and fat_block_next_alloc
+
+hoxu is responsible for entry sections, which include fat_entry_alloc, fat_entry_open, 
+fat_entry_close, fat_entry_write, fat_entry_read, fat_entry_delete, fat_entry_rename 
+
+The format file and the debugging we programmed together and they worked fine for us.
